@@ -9,8 +9,8 @@
 // Platform-specific functions and macros
 
 // Microsoft Visual Studio
-
-#if defined(_MSC_VER)
+// Note: newer msvc works has these types defined
+#if (_MSC_VER)<1700
 
 typedef unsigned char uint8_t;
 typedef unsigned long uint32_t;
