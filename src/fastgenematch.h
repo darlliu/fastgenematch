@@ -9,6 +9,8 @@ namespace fastgenematch
      */
     typedef enum
     {
+        allowed=-2,
+        unknown=-1,
         genesym=0,
         emsemble_id,
         unigene_id,
@@ -137,18 +139,17 @@ namespace fastgenematch
             };
             //std::string format(const std::string &);
             //size_t* hashes();
-            void serialize();
+            void serialize() {serialize ("dgcdefault.bin");};
             void serialize(const std::string&);
             void load(const std::string&);
-            void load();
+            void load() {load ("dgcdefault.bin");};
 
-        protected:
+			std::pair<int,int> formats;
             hashtable data;
+        protected:
             size_t length;
-            std::pair<int,int> formats;
             std::string empty;
             uint32_t seed;
-
     }; /* -----  end of class Geneobject  ----- */
 
     /*
@@ -161,7 +162,10 @@ namespace fastgenematch
     {
         public:
             /* ====================  LIFECYCLE     ======================================= */
-            Genematch_converter ();                             /* constructor */
+            Genematch_converter ()
+            {
+                initialize();
+            };                             /* constructor */
 
 
             /* ====================  MUTATORS      ======================================= */
@@ -169,19 +173,23 @@ namespace fastgenematch
             void do_convert();
 
             /* ====================  OPERATORS     ======================================= */
-            std::ostringstream operator<<(std::ifstream);
-            std::ofstream operator>>(std::ofstream);
+            std::istream& operator<<(std::istream&);
+            std::ostream& operator>>(std::ostream&);
 
             /* ====================  METHODS       ======================================= */
             struct params
             {
                 std::string inputname;
-                std::string outputfname;
+                std::string outputname;
                 std::string inputformat;
                 std::string outputformat;
             };
             /* ====================  DATA MEMBERS  ======================================= */
             params param;
+            Geneobject table;
+            std::string title;
+            std::unordered_map <std::string, format_types> lookup;
+
     }; /* -----  end of class Genematch_converter  ----- */
     /*
      * =====================================================================================
@@ -189,23 +197,21 @@ namespace fastgenematch
      *  Description:  a matcher that converts from one input to another output given the formats
      * =====================================================================================
      */
-    class Genematcher
+    class Genematcher: public Genematch_converter
     {
         public:
             /* ====================  LIFECYCLE     ======================================= */
-            Genematcher ();                             /* constructor */
-            ~Genematcher();
+			Genematcher ():Genematch_converter(){};                             /* constructor */
+			~Genematcher(){};
 
             /* ====================  ACCESSORS     ======================================= */
-            bool validate (std::string,std::string);
             std::string validate(std::string);
             std::string feedout(std::string);
 
             /* ====================  MUTATORS      ======================================= */
 
-            void initialize();
-            void save();
-            void load();
+            void read();
+            void match();
 
             /* ====================  DATA MEMBERS  ======================================= */
             struct params
@@ -214,12 +220,11 @@ namespace fastgenematch
                 bool verbose;
                 bool validate;
                 bool filein;
-                std::string fname;
+                std::string f;
                 bool convert;
                 bool fileout;
             };
             params param;
-
     }; /* -----  end of class Genematcher  ----- */
 
 };

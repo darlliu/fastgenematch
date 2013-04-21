@@ -11,5 +11,11 @@ int main()
     g2.load();
     std::cout<<" Lookup 1 for key apple "<<g2["apple"]<<" orange "<<g2["orange"]<<std::endl;
     std::cout<<" Missing Lookup for key pear "<<g2["pear"]<<std::endl;
+    fastgenematch::Genematcher G;
+	std::istringstream iss(std::string("A\tB\n"));
+    G<<iss;
+    std::ostringstream os;
+    G>>os;
+    std::cout<<os.str();
     return 1;
 };

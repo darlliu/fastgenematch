@@ -70,9 +70,9 @@ namespace fastgenematch
      */
 //decided this is for python wrapper
 
-    /*
-     *  Container
-     */
+                            /*
+                             *      Container
+                             */
 
     uint32_t Hashcaller::seed=SEED;
     /*
@@ -97,12 +97,9 @@ namespace fastgenematch
     std::string&
     Geneobject::operator() (const std::string & key)
     {
-        if ((format_types)formats.first==genesym)
-        {
-            return (*data)[key];
-        }else{
-            return (*data)[key];
-        }
+        if (data->size()>=(size_t)length*0.8) rehash();
+        //automatically rehash when adding stuff.
+        return (*data)[key];
     }
     /*
      * ===  FUNCTION  ======================================================================
@@ -132,10 +129,10 @@ namespace fastgenematch
      * =====================================================================================
      */
     void
-    Geneobject::serialize()
+    Geneobject::serialize(const std::string& name)
     {
         std::ofstream f;
-        f.open("fgcdefault.bin",std::ofstream::binary);
+        f.open(name,std::ofstream::binary);
         if (f.good())
         {
             f.write((char*) &formats.first, sizeof(int));
@@ -158,10 +155,10 @@ namespace fastgenematch
     };
 
     void
-    Geneobject::load()
+    Geneobject::load(const std::string& name)
     {
         std::ifstream f;
-        f.open("fgcdefault.bin",std::ifstream::binary);
+        f.open(name,std::ifstream::binary);
         if (f.good())
         {
             f.read((char*) &formats.first, sizeof(int));
@@ -191,8 +188,113 @@ namespace fastgenematch
         else f.close();
     };
 
-    /*
-     *  Converter
-     */
+                        /*
+                         *      Converter
+                         */
 
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  initialize
+     *  Description:  initialize class
+     * =====================================================================================
+     */
+    void
+    Genematch_converter::initialize()
+    {
+        param.inputname="";
+        param.outputname="";
+        param.inputformat="other";
+        param.outputformat="other";
+        lookup["genesym"]=genesym;
+        lookup["emsemble_id"]=emsemble_id;
+        lookup["emsemble"]=emsemble_id;
+        lookup["unigene_id"]=unigene_id;
+        lookup["uniprot"]=uniprot;
+        lookup["swissprot"]=swissprot;
+        lookup["uniprot_crick"]=uniprot_crick;
+        lookup["crick"]=uniprot_crick;
+        lookup["string"]=string;
+        lookup["other"]=allowed;
+        table.reseed();
+    }
+
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  do_convert
+     *  Description:  call convert routine
+     * =====================================================================================
+     */
+    void
+	Genematch_converter::do_convert()
+    {
+        try
+        {
+            table.formats.first=lookup[param.inputformat];
+        }
+        catch(std::out_of_range &err)
+        {
+            table.formats.first=-2;
+        }
+        try
+        {
+            table.formats.second=lookup[param.outputformat];
+        }
+        catch(std::out_of_range &err)
+        {
+            table.formats.second=-2;
+        }
+        title="fgc_"+param.inputformat+"_"+param.outputformat+".bin";
+        table.serialize(title);
+    }
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  operator<<
+     *  Description:  populate the table via input file and output formatted results
+     *                this is slow but okay given the rare application
+     * =====================================================================================
+     */
+    std::istream&
+    Genematch_converter::operator<<(std::istream& in)
+    {
+        if (!in.good()) return in;
+        char line[256],key[128],value[128];
+        //impose line limit of 256, it really should be just around 25
+        while (!in.eof())
+        {
+            in.getline(line,256);\
+            if (line[0]=='\0') continue;
+            //does not allow null char arrays
+			std::istringstream ss(line);
+            ss.getline(key,128,'\t');
+            ss.getline(value,128,'\t');
+            if (table[key]=="")
+            {
+                table(key)=value;
+            }else{
+                table(key)+=","+std::string(value);
+                //accumulative
+            }
+        }
+        do_convert();
+        return in;
+    };
+
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  operator>>
+     *  Description:  output key,value pair;
+     * =====================================================================================
+     */
+    std::ostream&
+    Genematch_converter::operator>>(std::ostream& out)
+    {
+        for (auto it: *(table.data))
+        {
+            out<<it.first<<"\t"<<it.second<<std::endl;
+        }
+        return out;
+    };
+                        /*
+                         *      Matcher
+                         */
 }
