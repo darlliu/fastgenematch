@@ -4,6 +4,39 @@
 #include "utils.h"
 namespace fastgenematch
 {
+    /*
+     *Fundamental format types
+     */
+    typedef enum
+    {
+        genesym=0,
+        emsemble_id,
+        unigene_id,
+        uniprot,
+        swissprot,
+        uniprot_crick,
+        string
+    } format_types;
+
+    /*
+     * =====================================================================================
+     *        Class:  Geneconverter
+     *  Description:  simple class to format gene symbols
+     * =====================================================================================
+     */
+/*
+ *    class Geneconverter
+ *    {
+ *        public:
+ *            [> ====================  LIFECYCLE     ======================================= <]
+ *            Geneconverter ();                             [> constructor <]
+ *
+ *            [> ====================  ACCESSORS     ======================================= <]
+ *            std::string format (const std::string& in);
+ *            std::unordered_map<std::string,std::string> greeks;
+ *
+ *    }; [> -----  end of class Geneconverter  ----- <]
+ */
 
     /*
      * =====================================================================================
@@ -16,8 +49,7 @@ namespace fastgenematch
 #define SEED 991413003
         public:
             /* ====================  LIFECYCLE     ======================================= */
-            Hashcaller():
-                seed(SEED)
+            Hashcaller()
 			{
                 return;
             };                             /* constructor */
@@ -27,50 +59,30 @@ namespace fastgenematch
                 size_t s;
                 uint64_t t[2];
                 //overfilled the hash
+                //s is usually 64 bit and thus only t[0]
+                //but in some cases it may be extended to above or below
             };
+            static uint32_t seed;
 
-            void reseed()
-            {
-                std::random_device rd;
-                seed=rd();
-            };
-            uint32_t setseed(uint32_t in)
-            {
-                seed=in;
-            };
-            uint32_t getseed()
-            {
-                return seed;
-            };
-            size_t operator()(std::string key)
+            size_t operator() (const std::string& key) const
             {
 
 #if defined(_M_X64)
-                MurmurHash3_x64_128 ( (void*) key.c_str(), key.size(), \
-                        (uint32_t) &seed, (void*) out.t);
+                MurmurHash3_x64_128 ( (const void*) key.c_str(), key.size(), \
+                        (uint32_t) seed, (void*) out.t);
 #else
-                MurmurHash3_x86_128 ( (void*) key.c_str(), key.size(), \
-                        (uint32_t) &seed, (void*) out.t);
+                MurmurHash3_x86_128 ( (const void*) key.c_str(), key.size(), \
+                        (uint32_t) seed, (void*) out.t);
 #endif
 
                 return out.s;
             };
+
         protected:
-            uint32_t seed;
             union out128 out;
 
     }; /* -----  end of class Hashcaller  ----- */
 
-    typedef enum
-    {
-        genesym=0,
-        emsemble_id,
-        unigene_id,
-        uniprot,
-        swissprot,
-        uniprot_crick,
-        string
-    } format;
     /*
      * =====================================================================================
      *        Class:  Geneobject
@@ -82,27 +94,56 @@ namespace fastgenematch
     class Geneobject
     {
         public:
+            typedef
+            std::shared_ptr<std::unordered_map<std::string,std::string,\
+                Hashcaller>> hashtable;
+            typedef std::unordered_map<std::string,std::string,\
+                Hashcaller> _hashtable;
             /* ====================  LIFECYCLE     ======================================= */
-            Geneobject ():isgenesym(false){};                             /* constructor */
-            struct genesym
-                //if key type is genesym, format first
-                //and convert all greek letters to latin
+            Geneobject ():
+                empty(""), data(new _hashtable), length(2000)
             {
-                std::string asis;
-                std::string formatted;
+                data->reserve(length);
+            };                             /* constructor */
+            /*
+             *struct genesym
+             *    //if key type is genesym, format first
+             *    //and convert all greek letters to latin
+             *{
+             *    std::string asis;
+             *    std::string formatted;
+             *};
+             */
+            /* ====================  ACCESSORS     ======================================= */
+            std::string& operator[](const std::string& key);
+            std::string& operator()(const std::string& key);
+            uint32_t getseed()
+            {
+                return Hashcaller::seed;
             };
-            std::string operator[](std::string key);
-            std::string operator[](size_t idx);
             void rehash();
-            void format();
-            size_t* hashes();
+
+            /* ====================  MUTATORS      ======================================= */
+            void reseed()
+            {
+                std::random_device rd;
+                Hashcaller::seed=rd();
+            };
+            uint32_t setseed(const uint32_t& in )
+            {
+                Hashcaller::seed=in;
+            };
+            //std::string format(const std::string &);
+            //size_t* hashes();
             void serialize();
+            void load(std::ifstream);
+
         protected:
-            std::unordered_map<std::string,std::string,\
-                Hashcaller> data;
-            bool isgenesym;
+            hashtable data;
             size_t length;
             std::pair<int,int> formats;
+            std::string empty;
+            uint32_t seed;
 
     }; /* -----  end of class Geneobject  ----- */
 
@@ -118,11 +159,14 @@ namespace fastgenematch
             /* ====================  LIFECYCLE     ======================================= */
             Genematch_converter ();                             /* constructor */
 
-            /* ====================  ACCESSORS     ======================================= */
 
             /* ====================  MUTATORS      ======================================= */
+            void initialize();
+            void do_convert();
 
             /* ====================  OPERATORS     ======================================= */
+            std::ostringstream operator<<(std::ifstream);
+            std::ofstream operator>>(std::ofstream);
 
             /* ====================  METHODS       ======================================= */
             struct params
@@ -134,8 +178,6 @@ namespace fastgenematch
             };
             /* ====================  DATA MEMBERS  ======================================= */
             params param;
-
-
     }; /* -----  end of class Genematch_converter  ----- */
     /*
      * =====================================================================================
@@ -151,12 +193,15 @@ namespace fastgenematch
             ~Genematcher();
 
             /* ====================  ACCESSORS     ======================================= */
+            bool validate (std::string,std::string);
+            std::string validate(std::string);
+            std::string feedout(std::string);
 
             /* ====================  MUTATORS      ======================================= */
 
+            void initialize();
             void save();
             void load();
-            void main_routine();
 
             /* ====================  DATA MEMBERS  ======================================= */
             struct params
