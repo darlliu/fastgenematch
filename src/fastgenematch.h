@@ -164,7 +164,6 @@ namespace fastgenematch
             /* ====================  LIFECYCLE     ======================================= */
             Genematch_converter ()
             {
-                param.inputname="";
                 param.outputname="";
                 param.inputformat="other";
                 param.outputformat="other";
@@ -183,7 +182,6 @@ namespace fastgenematch
             /* ====================  METHODS       ======================================= */
             struct params
             {
-                std::string inputname;
                 std::string outputname;
                 std::string inputformat;
                 std::string outputformat;
@@ -208,37 +206,45 @@ namespace fastgenematch
             Genematcher():
                 Genematch_converter()
             {
-                settings.once=true;
+                settings.bin=false;
                 settings.convert=false;
                 settings.verbose=false;
                 settings.validate=false;
-                settings.fname="fgcdefault.bin";
+                settings.fname="";
+                settings.binname="";
                 settings.filein=false;
                 settings.fileout=false;
+                settings.pair=false;
             };
 
             /* ====================  ACCESSORS     ======================================= */
-            void validate();
-            void feedout();
             void print_help();
             void print_settings();
+            void validate();
+            void match();
+            void match_pair();
 
             /* ====================  MUTATORS      ======================================= */
-            void read();
-            void match();
+            bool read(char** argv);
+            std::istream& feedin();
+            std::ostream& feedout();
 
             /* ====================  DATA MEMBERS  ======================================= */
             struct params
             {
-                bool once;
+                bool bin;
+                bool pair;
                 bool verbose;
                 bool validate;
                 bool filein;
                 std::string fname;
+                std::string binname;
                 bool convert;
                 bool fileout;
             };
             params settings;
+            std::istringstream iss;
+            std::ostringstream oss;
     }; /* -----  end of class Genematcher  ----- */
 
 };

@@ -305,24 +305,27 @@ namespace fastgenematch
     Genematcher::print_help()
     {
         std::string info=" Fast Gene Converter v0.0 -- Converts or validates one ID to another\n\
-                          -C -[V fi fo] inputformat outputformat [outputfile] (inputfile|inputstream)\n\
-                          -[v V fi fo] [outputfile] (inputfile|inputstream)\n\
+                          -C -[V fi fo] inputformat outputformat (inputfile|inputstream)\n\
+                          -[v V fi fo -p] [-b binfile] (inputfile|inputstream)\n\
                           To view more, type (thisexe) -V\
 						  ";
         std::string detail= "Global Options:\n\
                             -V Verbose, shows more information and a summary.\n\
-                            -fo File out, output to file instead of standard output\n\
-                                -> outputfile required filename when -fo is selected.\n\
                             -fi File in, inputs file name instead of text content \n\
                                 -> inputfile required input file name when -fi is selected.\n\
                             inputstream contents from stdin to be used to convert or match/validate.\n\
                             \n\
                             -C convert mode, without this part defaults to match/validate mode.\n\
-                            Note: In this mode, the input must be two tab separated pairs, from key to value, and each pair separated by lines\n\
                             Options under -C only:\n\
-                                inputformat, outputformat, string of formats for conversion, currently available.\n\
+                                Required: inputformat, outputformat, string of formats for conversion.\n\
+                                Required: inputfile if -fi or piped in tables\n\
+                            Note: In this mode, the input must be a tab separated pair, key (tab) value, and each pair separated by lines\n\
                             \n\
                             Options not under -C:\n\
+                                Required: inputfile if -fi or piped in tables\n\
+                                -b specify bin file (otherwise default is used), then requires bin file name of some pregenerated hashtable\n\
+                                -p specify whether or not the output format should contain original key value\n\
+                                -fo File out, output to file instead of standard output\n\
                                 -v Validate mode, not available in convert mode, validate the input symbols,\
                                 return the same IDs if the IDs match up and return empty string otherwise\n\
                             Note: In this mode, the input must be line separated IDs to be matched/validated.\
@@ -346,5 +349,183 @@ namespace fastgenematch
         std::clog<<"Automatically generated output name: "<<param.outputname<<std::endl;
         return ;
     }		/* -----  end of function print_info  ----- */
+
+
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  read
+     *  Description:  read input options
+     * =====================================================================================
+     */
+    bool
+    Genematcher::read ( char** argv )
+    {
+        char* argvv;
+        std::string f="", iformat="",oformat="",bin="";
+        for (int i=0; i<sizeof(argv); i++)
+        {
+            argvv=argv[i];
+            if (argvv[0]=='-')
+            {
+                switch(*argvv)
+                {
+                    case '-V':
+                        settings.verbose=true;
+                        break;
+                    case '-v':
+                        settings.validate=true;
+                        break;
+                    case '-C':
+                        settings.convert=true;
+                        break;
+                    case '-fi':
+                        settings.filein=true;
+                        break;
+                    case '-fo':
+                        settings.fileout=true;
+                        break;
+                    case '-b':
+                        settings.bin=true;
+                        break;
+                    case '-p':
+                        settings.pair=true;
+                        break;
+                    default:
+                        break;
+                }
+            }else{
+                if (settings.convert)
+                {
+                    if (iformat=="") iformat=argvv;
+                    else if (oformat=="") oformat=argvv;
+                    else if (f=="") f=argvv;
+                    else break;
+                }else{
+                    if (settings.bin)
+                        if (bin=="")
+                            bin=argvv;
+                        else
+                        {
+                            f=argvv;
+                            break;
+                        }
+                    else
+                    {
+                        f=argvv;
+                        break;
+                    }
+                }
+            }
+        }
+        //validation
+        if (f=="") return false;
+        if (settings.bin)
+        {
+            if (bin=="") return false;
+            else
+            {
+                std::ifstream fs(bin);
+                if (!fs.good())
+                {
+                    std::cerr<<"Unable to open hashtable file!"<<std::endl;
+                    fs.close();
+                    return false;
+                }
+                else{
+                    settings.binname=bin;
+                    fs.close();
+                }
+            }
+        }
+        if (settings.convert)
+        {
+            if (settings.validate) return false;
+            if (iformat=="" || oformat=="") return false;
+            else
+            {
+                param.inputformat=iformat;
+                param.outputformat=oformat;
+            }
+        }
+        if (settings.filein)
+        {
+            std::ifstream fs(f);
+            if (!fs.good())
+            {
+                std::cerr<<"Unable to open input file!"<<std::endl;
+                fs.close();
+                return false;
+            }else{
+                fs.close();
+                settings.fname=f;
+            }
+        }
+        return true;
+    }		/* -----  end of function read  ----- */
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  validate
+     *  Description:  validates symbols, returns itself if correct, returns empty otherwise
+     * =====================================================================================
+     */
+    void
+    Genematcher::validate (  )
+    {
+        std::string key, value;
+        std::stringstream trim;
+        while (iss.good())
+        {
+            std::getline(iss,key);
+            trim<<key;
+            key.clear();
+            trim>>key;
+            //cleanup
+            value=table[key];
+            if (value=="") oss<<""<<std::endl;
+            else oss<<key<<std::endl;
+        }
+        return ;
+    }		/* -----  end of function validate  ----- */
+
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  match,match_pair
+     *  Description:  match input to key,value pairs
+     * =====================================================================================
+     */
+    void
+    Genematcher::match()
+    {
+        std::string key, value;
+        std::stringstream trim;
+        while (iss.good())
+        {
+            std::getline(iss,key);
+            trim<<key;
+            key.clear();
+            trim>>key;
+            //cleanup
+            value=table[key];
+            if (value!="") oss<<value<<std::endl;
+        }
+        return ;
+    }
+    void
+    Genematcher::match_pair()
+    {
+        std::string key, value;
+        std::stringstream trim;
+        while (iss.good())
+        {
+            std::getline(iss,key);
+            trim<<key;
+            key.clear();
+            trim>>key;
+            //cleanup
+            value=table[key];
+            oss<<key<<"\t"<<value<<std::endl;
+        }
+        return ;
+    }
 
 }
