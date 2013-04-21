@@ -21,7 +21,7 @@
 
 namespace fastgenematch
 {
-    /*
+    /* Not used
      *Geneconverter::Geneconverter()
      *{
      *    greeks["α"]="alpha";
@@ -70,7 +70,9 @@ namespace fastgenematch
      */
 //decided this is for python wrapper
 
-
+    /*
+     *  Container
+     */
 
     uint32_t Hashcaller::seed=SEED;
     /*
@@ -102,6 +104,13 @@ namespace fastgenematch
             return (*data)[key];
         }
     }
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  rehash
+     *  Description:  rehash the table, doubling size and reseeding.
+     *                this process is automatically done every so often
+     * =====================================================================================
+     */
     void
     Geneobject::rehash()
     {
@@ -113,6 +122,77 @@ namespace fastgenematch
         {
             (*temp)[it.first]=it.second;
         }
+        data=temp;
     };
+
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  serialize, load
+     *  Description:  serialize the hashtable
+     * =====================================================================================
+     */
+    void
+    Geneobject::serialize()
+    {
+        std::ofstream f;
+        f.open("fgcdefault.bin",std::ofstream::binary);
+        if (f.good())
+        {
+            f.write((char*) &formats.first, sizeof(int));
+            f.write((char*) &formats.second,sizeof(int));
+            f.write((char*) &seed, sizeof(seed));
+            f.write((char*) &length, sizeof(length));
+            size_t s=data->size();
+            f.write((char*) &(s), sizeof(size_t));
+            for (auto it: *data)
+            {
+                size_t len1=it.first.size(),len2=it.second.size();
+                f.write((char*) &len1, sizeof(size_t));
+                f.write((char*) it.first.c_str(), len1+1);
+                f.write((char*) &len2, sizeof(size_t));
+                f.write((char*) it.second.c_str(), len2+1);
+            }
+            f.close();
+        }
+        else f.close();
+    };
+
+    void
+    Geneobject::load()
+    {
+        std::ifstream f;
+        f.open("fgcdefault.bin",std::ifstream::binary);
+        if (f.good())
+        {
+            f.read((char*) &formats.first, sizeof(int));
+            f.read((char*) &formats.second, sizeof(int));
+            f.read((char*) &seed, sizeof(seed));
+            f.read((char*) &length, sizeof(length));
+            data->reserve(length);
+            size_t s;
+            f.read((char*) &s, sizeof(size_t));
+            for (size_t i=0; i<s; i++)
+            {
+                size_t len1,len2;
+                char* first, *second;
+                //get two holders;
+                f.read((char*) &len1, sizeof(size_t));
+                first=new char[len1+1];
+                f.read((char*) first, len1+1);
+                f.read((char*) &len2, sizeof(size_t));
+                second=new char[len2+1];
+                f.read((char*) second, len2+1);
+                std::string key(first), value(second);
+                (*data)[key]=value;
+                delete first,second;
+            }
+            f.close();
+        }
+        else f.close();
+    };
+
+    /*
+     *  Converter
+     */
 
 }

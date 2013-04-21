@@ -104,6 +104,8 @@ namespace fastgenematch
                 empty(""), data(new _hashtable), length(2000)
             {
                 data->reserve(length);
+                formats.first=-1;
+                formats.second=-1;
             };                             /* constructor */
             /*
              *struct genesym
@@ -136,7 +138,9 @@ namespace fastgenematch
             //std::string format(const std::string &);
             //size_t* hashes();
             void serialize();
-            void load(std::ifstream);
+            void serialize(const std::string&);
+            void load(const std::string&);
+            void load();
 
         protected:
             hashtable data;
