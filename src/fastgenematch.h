@@ -139,10 +139,10 @@ namespace fastgenematch
             };
             //std::string format(const std::string &);
             //size_t* hashes();
-            void serialize() {serialize ("dgcdefault.bin");};
+            void serialize() {serialize ("fgcdefault.bin");};
             void serialize(const std::string&);
             void load(const std::string&);
-            void load() {load ("dgcdefault.bin");};
+            void load() {load ("fgcdefault.bin");};
 
 			std::pair<int,int> formats;
             hashtable data;
@@ -164,6 +164,10 @@ namespace fastgenematch
             /* ====================  LIFECYCLE     ======================================= */
             Genematch_converter ()
             {
+                param.inputname="";
+                param.outputname="";
+                param.inputformat="other";
+                param.outputformat="other";
                 initialize();
             };                             /* constructor */
 
@@ -201,15 +205,25 @@ namespace fastgenematch
     {
         public:
             /* ====================  LIFECYCLE     ======================================= */
-			Genematcher ():Genematch_converter(){};                             /* constructor */
-			~Genematcher(){};
+            Genematcher():
+                Genematch_converter()
+            {
+                settings.once=true;
+                settings.convert=false;
+                settings.verbose=false;
+                settings.validate=false;
+                settings.fname="fgcdefault.bin";
+                settings.filein=false;
+                settings.fileout=false;
+            };
 
             /* ====================  ACCESSORS     ======================================= */
-            std::string validate(std::string);
-            std::string feedout(std::string);
+            void validate();
+            void feedout();
+            void print_help();
+            void print_settings();
 
             /* ====================  MUTATORS      ======================================= */
-
             void read();
             void match();
 
@@ -220,11 +234,11 @@ namespace fastgenematch
                 bool verbose;
                 bool validate;
                 bool filein;
-                std::string f;
+                std::string fname;
                 bool convert;
                 bool fileout;
             };
-            params param;
+            params settings;
     }; /* -----  end of class Genematcher  ----- */
 
 };

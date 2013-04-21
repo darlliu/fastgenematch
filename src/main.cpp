@@ -17,5 +17,7 @@ int main()
     std::ostringstream os;
     G>>os;
     std::cout<<os.str();
+    G.print_help();
+	G.print_settings();
     return 1;
 };

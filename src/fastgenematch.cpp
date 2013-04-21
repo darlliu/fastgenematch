@@ -201,10 +201,6 @@ namespace fastgenematch
     void
     Genematch_converter::initialize()
     {
-        param.inputname="";
-        param.outputname="";
-        param.inputformat="other";
-        param.outputformat="other";
         lookup["genesym"]=genesym;
         lookup["emsemble_id"]=emsemble_id;
         lookup["emsemble"]=emsemble_id;
@@ -243,8 +239,8 @@ namespace fastgenematch
         {
             table.formats.second=-2;
         }
-        title="fgc_"+param.inputformat+"_"+param.outputformat+".bin";
-        table.serialize(title);
+        param.outputname="fgc_"+param.inputformat+"_"+param.outputformat+".bin";
+        table.serialize(param.outputname);
     }
     /*
      * ===  FUNCTION  ======================================================================
@@ -297,4 +293,58 @@ namespace fastgenematch
                         /*
                          *      Matcher
                          */
+
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  print_help,info
+     *  Description:  print help info
+     * =====================================================================================
+     */
+
+    void
+    Genematcher::print_help()
+    {
+        std::string info=" Fast Gene Converter v0.0 -- Converts or validates one ID to another\n\
+                          -C -[V fi fo] inputformat outputformat [outputfile] (inputfile|inputstream)\n\
+                          -[v V fi fo] [outputfile] (inputfile|inputstream)\n\
+                          To view more, type (thisexe) -V\
+						  ";
+        std::string detail= "Global Options:\n\
+                            -V Verbose, shows more information and a summary.\n\
+                            -fo File out, output to file instead of standard output\n\
+                                -> outputfile required filename when -fo is selected.\n\
+                            -fi File in, inputs file name instead of text content \n\
+                                -> inputfile required input file name when -fi is selected.\n\
+                            inputstream contents from stdin to be used to convert or match/validate.\n\
+                            \n\
+                            -C convert mode, without this part defaults to match/validate mode.\n\
+                            Note: In this mode, the input must be two tab separated pairs, from key to value, and each pair separated by lines\n\
+                            Options under -C only:\n\
+                                inputformat, outputformat, string of formats for conversion, currently available.\n\
+                            \n\
+                            Options not under -C:\n\
+                                -v Validate mode, not available in convert mode, validate the input symbols,\
+                                return the same IDs if the IDs match up and return empty string otherwise\n\
+                            Note: In this mode, the input must be line separated IDs to be matched/validated.\
+							";
+        if (settings.verbose)
+            std::cout<<info<<std::endl<<detail<<std::endl;
+        else std::cout<<info<<std::endl;
+    }
+
+    void
+    Genematcher::print_settings (  )
+    {
+        std::clog<<"Current settings"<<std::endl;
+        std::clog<<"Convert mode: "<<std::boolalpha<<settings.convert<<std::endl;
+        std::clog<<"Verbose mode: "<<std::boolalpha<<settings.verbose<<std::endl;
+        std::clog<<"Get input from file: "<<std::boolalpha<<settings.filein<<std::endl;
+        std::clog<<"Write output to file: "<<std::boolalpha<<settings.fileout<<std::endl;
+        std::clog<<"Input format: "<<param.inputformat<<std::endl;
+        std::clog<<"Output format: "<<param.outputname<<std::endl;
+        std::clog<<"Input filename: "<<settings.fname<<std::endl;
+        std::clog<<"Automatically generated output name: "<<param.outputname<<std::endl;
+        return ;
+    }		/* -----  end of function print_info  ----- */
+
 }
