@@ -288,8 +288,8 @@ namespace fastgenematch
         for (auto it: *(table.data))
         {
             out<<it.first<<"\t"<<it.second<<std::endl;
-            std::cout<<it.first<<"\t"<<it.second<<std::endl;
-            std::cout<<"outputing converts"<<std::endl;
+            //std::cout<<it.first<<"\t"<<it.second<<std::endl;
+            //std::cout<<"outputing converts"<<std::endl;
         }
         return out;
     };
