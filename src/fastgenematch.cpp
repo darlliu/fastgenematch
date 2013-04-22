@@ -507,9 +507,9 @@ namespace fastgenematch
     Genematcher::match()
     {
         std::string key, value;
-        std::stringstream trim;
         while (iss.good())
         {
+            std::stringstream trim;
             std::getline(iss,key);
             trim<<key;
             key.clear();
@@ -524,9 +524,9 @@ namespace fastgenematch
     Genematcher::match_pair()
     {
         std::string key, value;
-        std::stringstream trim;
         while (iss.good())
         {
+            std::stringstream trim;
             std::getline(iss,key);
             trim<<key;
             key.clear();
@@ -557,11 +557,11 @@ namespace fastgenematch
         else {
             std::string s(".");
             while (s!="")
-			{
-				std::getline(std::cin,s);
-				iss<<s<<std::endl;
-			}
-		}
+            {
+                std::getline(std::cin,s);
+                iss<<s<<std::endl;
+            }
+        }
         return iss;
     }		/* -----  end of function feedin  ----- */
     std::ostream&
