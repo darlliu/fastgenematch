@@ -350,6 +350,7 @@ namespace fastgenematch
         std::clog<<"Input format: "<<param.inputformat<<std::endl;
         std::clog<<"Output format: "<<param.outputformat<<std::endl;
         std::clog<<"Input filename: "<<settings.fname<<std::endl;
+        std::clog<<"Bin bucket filename: "<<settings.binname<<std::endl;
         std::clog<<"Automatically generated output name: "<<param.outputname<<std::endl;
         return ;
     }		/* -----  end of function print_info  ----- */
@@ -466,7 +467,7 @@ namespace fastgenematch
                 settings.fname=f;
             }
         }
-        //print_settings();
+        print_settings();
         return true;
     }		/* -----  end of function read  ----- */
     /*
@@ -479,14 +480,16 @@ namespace fastgenematch
     Genematcher::validate (  )
     {
         std::string key, value;
-        std::stringstream trim;
         while (iss.good())
         {
+            std::stringstream trim;
             std::getline(iss,key);
+            //std::cout<<key<<"!!"<<std::endl;
             trim<<key;
             key.clear();
             trim>>key;
             //cleanup
+            //std::cout<<key<<"!!!"<<std::endl;
             value=table[key];
             if (value=="") oss<<""<<std::endl;
             else oss<<key<<std::endl;
@@ -556,7 +559,7 @@ namespace fastgenematch
             while (s!="")
 			{
 				std::getline(std::cin,s);
-				iss<<s;
+				iss<<s<<std::endl;
 			}
 		}
         return iss;
@@ -564,14 +567,14 @@ namespace fastgenematch
     std::ostream&
     Genematcher::feedout ()
     {
-        if (settings.filein)
+        if (settings.fileout)
         {
             std::ofstream fs ("output.csv");
             if (!fs.good()) throw (ErrMsg("Failed to write!"));
             fs<<oss.str();
 			fs.close();
         }
-        else std::cout<<oss.str();
+        else std::cout<<oss.rdbuf();
         return oss;
     }		/* -----  end of function feedin  ----- */
 

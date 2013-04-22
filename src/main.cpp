@@ -40,7 +40,7 @@ int main(int argc, char**  argv)
                 G.print_settings();
                 return 0;
             }else{
-                return 1;
+                break;
             }
         default:
             break;

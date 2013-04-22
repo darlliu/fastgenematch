@@ -1,6 +1,9 @@
 a.out
 fgc.exe
 *.gch
+*.txt
+*.csv
+*.bin
 *.phc
 .svn/*
 vs/*
