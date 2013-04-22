@@ -371,7 +371,7 @@ namespace fastgenematch
             argvv=argv[i];
             if (argvv[0]=='-')
             {
-                std::clog<<"Got "<<argvv[0]<<argvv[1]<<std::endl;
+                //std::clog<<"Got "<<argvv[0]<<argvv[1]<<std::endl;
                 switch(argvv[1])
                 {
                     case 'V':
@@ -466,7 +466,7 @@ namespace fastgenematch
                 settings.fname=f;
             }
         }
-        print_settings();
+        //print_settings();
         return true;
     }		/* -----  end of function read  ----- */
     /*
@@ -551,7 +551,14 @@ namespace fastgenematch
             iss<<fs.rdbuf();
             fs.close();
         }
-        else iss<<std::cin;
+        else {
+            std::string s(".");
+            while (s!="")
+			{
+				std::getline(std::cin,s);
+				iss<<s;
+			}
+		}
         return iss;
     }		/* -----  end of function feedin  ----- */
     std::ostream&
@@ -564,7 +571,7 @@ namespace fastgenematch
             fs<<oss.str();
 			fs.close();
         }
-        else std::cout<<oss;
+        else std::cout<<oss.str();
         return oss;
     }		/* -----  end of function feedin  ----- */
 

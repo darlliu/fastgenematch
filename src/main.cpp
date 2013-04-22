@@ -47,7 +47,7 @@ int main(int argc, char**  argv)
     }
     try
     {
-        std::clog<<"Into main loop"<<std::endl;
+        //std::clog<<"Into main loop"<<std::endl;
         if( G.main(argc, argv) )
         return 1;
         else return 2;
