@@ -1,6 +1,5 @@
 #ifndef FASTGENEMATCH
 #define FASTGENEMATCH
-#include "MurmurHash3.h"
 #include "utils.h"
 namespace fastgenematch
 {
@@ -70,13 +69,8 @@ namespace fastgenematch
             size_t operator() (const std::string& key) const
             {
 
-#if defined(_M_X64)
-                MurmurHash3_x64_128 ( (const void*) key.c_str(), key.size(), \
+                Murmur3( (const void*) key.c_str(), key.size(), \
                         (uint32_t) seed, (void*) out.t);
-#else
-                MurmurHash3_x86_128 ( (const void*) key.c_str(), key.size(), \
-                        (uint32_t) seed, (void*) out.t);
-#endif
 
                 return out.s;
             };
