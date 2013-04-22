@@ -548,7 +548,8 @@ namespace fastgenematch
         {
             std::ifstream fs (settings.fname);
             if (!fs.good()) throw (ErrMsg("Failed to read!") );
-            iss<<fs;
+            iss<<fs.rdbuf();
+            fs.close();
         }
         else iss<<std::cin;
         return iss;
@@ -560,7 +561,8 @@ namespace fastgenematch
         {
             std::ofstream fs ("output.csv");
             if (!fs.good()) throw (ErrMsg("Failed to write!"));
-            fs<<oss;
+            fs<<oss.str();
+			fs.close();
         }
         else std::cout<<oss;
         return oss;
