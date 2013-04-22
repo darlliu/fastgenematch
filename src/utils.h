@@ -9,6 +9,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 /* Courtesy of Kirill V Lyadvinsky. Though not used yet.
  *template<int> void Murmur3Hasher
