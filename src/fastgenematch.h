@@ -1,6 +1,6 @@
 #ifndef FASTGENEMATCH
 #define FASTGENEMATCH
-#include "../smhasher-read-only/MurmurHash3.h"
+#include "MurmurHash3.h"
 #include "utils.h"
 namespace fastgenematch
 {
@@ -134,7 +134,7 @@ namespace fastgenematch
                 std::random_device rd;
                 Hashcaller::seed=rd();
             };
-            uint32_t setseed(const uint32_t& in )
+            void setseed(const uint32_t& in )
             {
                 Hashcaller::seed=in;
             };
@@ -226,7 +226,7 @@ namespace fastgenematch
             void match_pair();
 
             /* ====================  MUTATORS      ======================================= */
-            bool read(char** argv);
+            bool read(int argc, char** argv);
             std::istream& feedin();
             std::ostream& feedout();
             bool main(int argc, char** argv);

@@ -181,7 +181,8 @@ namespace fastgenematch
                 f.read((char*) second, len2+1);
                 std::string key(first), value(second);
                 (*data)[key]=value;
-                delete first,second;
+                delete first;
+                delete second;
             }
             f.close();
         }
@@ -287,6 +288,8 @@ namespace fastgenematch
         for (auto it: *(table.data))
         {
             out<<it.first<<"\t"<<it.second<<std::endl;
+            std::cout<<it.first<<"\t"<<it.second<<std::endl;
+            std::cout<<"outputing converts"<<std::endl;
         }
         return out;
     };
@@ -305,27 +308,27 @@ namespace fastgenematch
     Genematcher::print_help()
     {
         std::string info=" Fast Gene Converter v0.0 -- Converts or validates one ID to another\n\
-                          -C -[V fi fo] inputformat outputformat (inputfile|inputstream)\n\
-                          -[v V fi fo p] [-b binfile] (inputfile|inputstream)\n\
+                          -C -[V i o] inputformat outputformat (inputfile|inputstream)\n\
+                          -[v V i o p] [-b binfile] (inputfile|inputstream)\n\
                           To view more, type (thisexe) -V\
 						  ";
         std::string detail= "Global Options:\n\
                             -V Verbose, shows more information and a summary.\n\
-                            -fi File in, inputs file name instead of text content \n\
-                                -> inputfile required input file name when -fi is selected.\n\
+                            -i File in, inputs file name instead of text content \n\
+                                -> inputfile required input file name when -i is selected.\n\
                             inputstream contents from stdin to be used to convert or match/validate.\n\
                             \n\
                             -C build hashtable (convert) mode, without this part defaults to match/validate mode.\n\
                             Options under -C only:\n\
                                 Required: inputformat, outputformat, string of formats for conversion.\n\
-                                Required: inputfile if -fi or piped in tables\n\
+                                Required: inputfile if -i or piped in tables\n\
                             Note: In this mode, the input must be a tab separated pair, key (tab) value, and each pair separated by lines\n\
                             \n\
                             Options not under -C:\n\
-                                Required: inputfile if -fi or piped in tables\n\
+                                Required: inputfile if -i or piped in tables\n\
                                 -b specify bin file (otherwise default is used), then requires bin file name of some pregenerated hashtable\n\
                                 -p specify whether or not the output format should contain original key value\n\
-                                -fo File out, output to file instead of standard output\n\
+                                -o File out, output to file instead of standard output\n\
                                 -v Validate mode, not available in convert mode, validate the input symbols,\
                                 return the same IDs if the IDs match up and return empty string otherwise\n\
                             Note: In this mode, the input must be line separated IDs to be matched/validated.\
@@ -345,7 +348,7 @@ namespace fastgenematch
         std::clog<<"Get input from file: "<<std::boolalpha<<settings.filein<<std::endl;
         std::clog<<"Write output to file: "<<std::boolalpha<<settings.fileout<<std::endl;
         std::clog<<"Input format: "<<param.inputformat<<std::endl;
-        std::clog<<"Output format: "<<param.outputname<<std::endl;
+        std::clog<<"Output format: "<<param.outputformat<<std::endl;
         std::clog<<"Input filename: "<<settings.fname<<std::endl;
         std::clog<<"Automatically generated output name: "<<param.outputname<<std::endl;
         return ;
@@ -359,36 +362,37 @@ namespace fastgenematch
      * =====================================================================================
      */
     bool
-    Genematcher::read ( char** argv )
+    Genematcher::read ( int argc, char** argv )
     {
         char* argvv;
         std::string f="", iformat="",oformat="",bin="";
-        for (int i=0; i<sizeof(argv); i++)
+        for (int i=1; i<argc; i++)
         {
             argvv=argv[i];
             if (argvv[0]=='-')
             {
-                switch(*argvv)
+                std::clog<<"Got "<<argvv[0]<<argvv[1]<<std::endl;
+                switch(argvv[1])
                 {
-                    case '-V':
+                    case 'V':
                         settings.verbose=true;
                         break;
-                    case '-v':
+                    case 'v':
                         settings.validate=true;
                         break;
-                    case '-C':
+                    case 'C':
                         settings.convert=true;
                         break;
-                    case '-fi':
+                    case 'i':
                         settings.filein=true;
                         break;
-                    case '-fo':
+                    case 'o':
                         settings.fileout=true;
                         break;
-                    case '-b':
+                    case 'b':
                         settings.bin=true;
                         break;
-                    case '-p':
+                    case 'p':
                         settings.pair=true;
                         break;
                     default:
@@ -462,6 +466,7 @@ namespace fastgenematch
                 settings.fname=f;
             }
         }
+        print_settings();
         return true;
     }		/* -----  end of function read  ----- */
     /*
@@ -553,7 +558,7 @@ namespace fastgenematch
     {
         if (settings.filein)
         {
-            std::ofstream fs (param.outputname);
+            std::ofstream fs ("output.csv");
             if (!fs.good()) throw (ErrMsg("Failed to write!"));
             fs<<oss;
         }
@@ -571,36 +576,38 @@ namespace fastgenematch
     Genematcher::main (int argc, char** argv)
     {
         std::clog<<"Fast gene converter v0.0"<<std::endl;
-        if (!read(argv))
+        if (!read(argc, argv))
         {
             std::cerr<<"Error reading options!"<<std::endl;
             print_settings();
             return false;
         }else{
-            if (settings.bin)
-                table.load(settings.binname);
-            else{
-                std::ifstream ff("fgcdefault.bin");
-                if (!ff.good())
-                {
-                    ff.close();
-                    return false;
-                }else{
-                    table.load();
-                    ff.close();
-                }
-            }
             feedin();
             if(settings.convert)
             {
                 (*this)<<iss;
                 (*this)>>oss;
-            }else if (settings.validate){
-                validate();
-            }else if (settings.pair){
-                match_pair();
-            }else {
-                match();
+            } else {
+                if (settings.bin)
+                    table.load(settings.binname);
+                else{
+                    std::ifstream ff("fgcdefault.bin");
+                    if (!ff.good())
+                    {
+                        ff.close();
+                        return false;
+                    }else{
+                        table.load();
+                        ff.close();
+                    }
+                }
+                if (settings.validate){
+                    validate();
+                }else if (settings.pair){
+                    match_pair();
+                }else {
+                    match();
+                }
             }
             feedout();
         }

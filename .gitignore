@@ -1,2 +1,6 @@
+a.out
+fgc.exe
+*.gch
+*.phc
 .svn/*
 vs/*

@@ -2,27 +2,11 @@
 // MurmurHash3 was written by Austin Appleby, and is placed in the public
 // domain. The author hereby disclaims copyright to this source code.
 
-#ifndef _MURMURHASH3_H_
-#define _MURMURHASH3_H_
-
-//-----------------------------------------------------------------------------
-// Platform-specific functions and macros
-
-// Microsoft Visual Studio
-// Note: newer msvc works has these types defined
-//#if (_MSC_VER)<1700
-
-//typedef unsigned char uint8_t;
-//typedef unsigned long uint32_t;
-//typedef unsigned __int64 uint64_t;
-
-//// Other compilers
-
-//#else	// defined(_MSC_VER)
+#ifndef MURMURHASH3_H
+#define MURMURHASH3_H
 
 #include <stdint.h>
 
-//#endif // !defined(_MSC_VER)
 
 //-----------------------------------------------------------------------------
 

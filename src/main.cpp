@@ -26,23 +26,34 @@ int test()
 int main(int argc, char**  argv)
 {
     fastgenematch::Genematcher G;
+    //std::clog<<"Initiating main routines"<<argc<<argv<<std::endl;
     switch(argc)
     {
-        case 0:
+        case 1:
             G.print_help();
             return 0;
-        case 1:
-            if (*argv[0]=='-V')
+        case 2:
+            if (argv[1][1]=='V')
             {
+                G.settings.verbose=true;
                 G.print_help();
                 G.print_settings();
                 return 0;
+            }else{
+                return 1;
             }
         default:
             break;
     }
-
-    if( G.main(argc, argv) )
+    try
+    {
+        std::clog<<"Into main loop"<<std::endl;
+        if( G.main(argc, argv) )
         return 1;
-    else return 2;
+        else return 2;
+    }
+    catch(...)
+    {
+        std::cerr<<"Undefined exception occurred!"<<std::endl;
+    }
 }
