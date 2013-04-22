@@ -306,7 +306,7 @@ namespace fastgenematch
     {
         std::string info=" Fast Gene Converter v0.0 -- Converts or validates one ID to another\n\
                           -C -[V fi fo] inputformat outputformat (inputfile|inputstream)\n\
-                          -[v V fi fo -p] [-b binfile] (inputfile|inputstream)\n\
+                          -[v V fi fo p] [-b binfile] (inputfile|inputstream)\n\
                           To view more, type (thisexe) -V\
 						  ";
         std::string detail= "Global Options:\n\
@@ -315,7 +315,7 @@ namespace fastgenematch
                                 -> inputfile required input file name when -fi is selected.\n\
                             inputstream contents from stdin to be used to convert or match/validate.\n\
                             \n\
-                            -C convert mode, without this part defaults to match/validate mode.\n\
+                            -C build hashtable (convert) mode, without this part defaults to match/validate mode.\n\
                             Options under -C only:\n\
                                 Required: inputformat, outputformat, string of formats for conversion.\n\
                                 Required: inputfile if -fi or piped in tables\n\
@@ -340,6 +340,7 @@ namespace fastgenematch
     {
         std::clog<<"Current settings"<<std::endl;
         std::clog<<"Convert mode: "<<std::boolalpha<<settings.convert<<std::endl;
+        std::clog<<"Binary file provided: "<<std::boolalpha<<settings.bin<<std::endl;
         std::clog<<"Verbose mode: "<<std::boolalpha<<settings.verbose<<std::endl;
         std::clog<<"Get input from file: "<<std::boolalpha<<settings.filein<<std::endl;
         std::clog<<"Write output to file: "<<std::boolalpha<<settings.fileout<<std::endl;
@@ -418,7 +419,7 @@ namespace fastgenematch
             }
         }
         //validation
-        if (f=="") return false;
+
         if (settings.bin)
         {
             if (bin=="") return false;
@@ -449,6 +450,7 @@ namespace fastgenematch
         }
         if (settings.filein)
         {
+            if (f=="") return false;
             std::ifstream fs(f);
             if (!fs.good())
             {
@@ -528,4 +530,80 @@ namespace fastgenematch
         return ;
     }
 
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  feedin,out
+     *  Description:  connect from cin/out or file to rest of program
+     * =====================================================================================
+     */
+    std::istream&
+    Genematcher::feedin ()
+    {
+        if (settings.filein)
+        {
+            std::ifstream fs (settings.fname);
+            if (!fs.good()) throw (ErrMsg("Failed to read!") );
+            iss<<fs;
+        }
+        else iss<<std::cin;
+        return iss;
+    }		/* -----  end of function feedin  ----- */
+    std::ostream&
+    Genematcher::feedout ()
+    {
+        if (settings.filein)
+        {
+            std::ofstream fs (param.outputname);
+            if (!fs.good()) throw (ErrMsg("Failed to write!"));
+            fs<<oss;
+        }
+        else std::cout<<oss;
+        return oss;
+    }		/* -----  end of function feedin  ----- */
+
+    /*
+     * ===  FUNCTION  ======================================================================
+     *         Name:  main
+     *  Description:  main interface and scheduler
+     * =====================================================================================
+     */
+    bool
+    Genematcher::main (int argc, char** argv)
+    {
+        std::clog<<"Fast gene converter v0.0"<<std::endl;
+        if (!read(argv))
+        {
+            std::cerr<<"Error reading options!"<<std::endl;
+            print_settings();
+            return false;
+        }else{
+            if (settings.bin)
+                table.load(settings.binname);
+            else{
+                std::ifstream ff("fgcdefault.bin");
+                if (!ff.good())
+                {
+                    ff.close();
+                    return false;
+                }else{
+                    table.load();
+                    ff.close();
+                }
+            }
+            feedin();
+            if(settings.convert)
+            {
+                (*this)<<iss;
+                (*this)>>oss;
+            }else if (settings.validate){
+                validate();
+            }else if (settings.pair){
+                match_pair();
+            }else {
+                match();
+            }
+            feedout();
+        }
+        return true;
+    }		/* -----  end of function main  ----- */
 }

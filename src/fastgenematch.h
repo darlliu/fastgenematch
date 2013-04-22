@@ -4,6 +4,7 @@
 #include "utils.h"
 namespace fastgenematch
 {
+    typedef std::string ErrMsg;
     /*
      *Fundamental format types
      */
@@ -228,6 +229,7 @@ namespace fastgenematch
             bool read(char** argv);
             std::istream& feedin();
             std::ostream& feedout();
+            bool main(int argc, char** argv);
 
             /* ====================  DATA MEMBERS  ======================================= */
             struct params
@@ -243,8 +245,7 @@ namespace fastgenematch
                 bool fileout;
             };
             params settings;
-            std::istringstream iss;
-            std::ostringstream oss;
+            std::stringstream iss,oss;
     }; /* -----  end of class Genematcher  ----- */
 
 };

@@ -1,6 +1,6 @@
 #include "fastgenematch.h"
 
-int main()
+int test()
 {
 	fastgenematch::Geneobject g1,g2;
     g1("apple")="delicious";
@@ -21,3 +21,28 @@ int main()
 	G.print_settings();
     return 1;
 };
+
+
+int main(int argc, char**  argv)
+{
+    fastgenematch::Genematcher G;
+    switch(argc)
+    {
+        case 0:
+            G.print_help();
+            return 0;
+        case 1:
+            if (*argv[0]=='-V')
+            {
+                G.print_help();
+                G.print_settings();
+                return 0;
+            }
+        default:
+            break;
+    }
+
+    if( G.main(argc, argv) )
+        return 1;
+    else return 2;
+}
