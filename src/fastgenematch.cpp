@@ -268,7 +268,7 @@ namespace fastgenematch
             {
                 table(key)=value;
             }else{
-                table(key)+=","+std::string(value);
+                table(key)+="\f"+std::string(value);
                 //accumulative
             }
         }
@@ -482,14 +482,12 @@ namespace fastgenematch
         std::string key, value;
         while (iss.good())
         {
-            std::stringstream trim;
-            std::getline(iss,key);
+            //std::stringstream trim;
+            //std::getline(iss,key);
             //std::cout<<key<<"!!"<<std::endl;
-            trim<<key;
+            //trim<<key;
             key.clear();
-            trim>>key;
-            //cleanup
-            //std::cout<<key<<"!!!"<<std::endl;
+            iss>>key;
             value=table[key];
             if (value=="") oss<<""<<std::endl;
             else oss<<key<<std::endl;
@@ -509,11 +507,8 @@ namespace fastgenematch
         std::string key, value;
         while (iss.good())
         {
-            std::stringstream trim;
-            std::getline(iss,key);
-            trim<<key;
             key.clear();
-            trim>>key;
+            iss>>key;
             //cleanup
             value=table[key];
             if (value!="") oss<<value<<std::endl;
@@ -526,11 +521,8 @@ namespace fastgenematch
         std::string key, value;
         while (iss.good())
         {
-            std::stringstream trim;
-            std::getline(iss,key);
-            trim<<key;
             key.clear();
-            trim>>key;
+            iss>>key;
             //cleanup
             value=table[key];
             oss<<key<<"\t"<<value<<std::endl;
