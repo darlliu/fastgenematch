@@ -398,6 +398,9 @@ Options not under -C:\n\
                     case 'b':
                         settings.bin=true;
                         break;
+                    case 'H':
+                        settings.hold=true;
+                        break;
                     case 'p':
                         settings.pair=true;
                         break;
@@ -411,17 +414,15 @@ Options not under -C:\n\
                     else if (oformat=="") oformat=argvv;
                     else if (f=="") f=argvv;
                     else break;
-                }else{
+                } else {
                     if (settings.bin)
                         if (bin=="")
                             bin=argvv;
-                        else
-                        {
+                        else {
                             f=argvv;
                             break;
                         }
-                    else
-                    {
+                    else {
                         f=argvv;
                         break;
                     }
@@ -550,8 +551,7 @@ Options not under -C:\n\
             if (!fs.good()) throw (ErrMsg("Failed to read!") );
             iss<<fs.rdbuf();
             fs.close();
-        }
-        else {
+        }else{
             std::string s(".");
             while (s!="")
             {
@@ -584,6 +584,7 @@ Options not under -C:\n\
     bool
     Genematcher::main (int argc, char** argv)
     {
+        bool go=true;
         std::clog<<"Fast gene converter v0.0"<<std::endl;
         if (!read(argc, argv))
         {
@@ -591,12 +592,13 @@ Options not under -C:\n\
             print_settings();
             return false;
         }else{
-            feedin();
             if(settings.convert)
             {
+                feedin();
                 (*this)<<iss;
                 (*this)>>oss;
-            } else {
+                feedout();
+            }else{
                 if (settings.bin)
                     table.load(settings.binname);
                 else{
@@ -605,20 +607,34 @@ Options not under -C:\n\
                     {
                         ff.close();
                         return false;
-                    }else{
+                    } else {
                         table.load();
                         ff.close();
                     }
                 }
-                if (settings.validate){
-                    validate();
-                }else if (settings.pair){
-                    match_pair();
-                }else {
-                    match();
+                while (go)
+                {
+                    feedin();
+                    if (settings.validate)
+                    {
+                        validate();
+                    }else{
+                        if (settings.pair)
+                        {
+                            match_pair();
+                        }else{
+                            match();
+                        }
+                    }
+                    feedout();
+                    go=settings.hold;
+                    settings.filein=false;
+                    //hold on listening to stdin if hold set
+                    iss.clear();
+                    oss.clear();
+                    //in any case we will clear the intermediate streams
                 }
             }
-            feedout();
         }
         return true;
     }		/* -----  end of function main  ----- */
