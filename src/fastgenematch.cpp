@@ -5,7 +5,7 @@
  *
  *    Description:  Source file matching header
  *
- *        Version:  0.0
+ *        Version:  0.1
  *        Created:  4/20/2013 4:17:34 PM
  *       Revision:  none
  *       Compiler:  gcc/clang/msvc
@@ -307,32 +307,39 @@ namespace fastgenematch
     void
     Genematcher::print_help()
     {
-        std::string info=" Fast Gene Converter v0.0 -- Converts or validates one ID to another\n\
-                          -C -[V i o] inputformat outputformat (inputfile|inputstream)\n\
-                          -[v V i o p] [-b binfile] (inputfile|inputstream)\n\
-                          To view more, type (thisexe) -V\
+        print_version();
+        std::string info=" A Fast Gene Converter -- Converts or validates one ID to another\n\
+              -C -[V i o] inputformat outputformat (inputfile|inputstream)\n\
+              -[v V i o p] [-b binfile] (inputfile|inputstream)\n\
+              To view more, type (thisexe) -V\
 						  ";
         std::string detail= "Global Options:\n\
-                            -V Verbose, shows more information and a summary.\n\
-                            -i File in, inputs file name instead of text content \n\
-                                -> inputfile required input file name when -i is selected.\n\
-                            inputstream contents from stdin to be used to convert or match/validate.\n\
-                            \n\
-                            -C build hashtable (convert) mode, without this part defaults to match/validate mode.\n\
-                            Options under -C only:\n\
-                                Required: inputformat, outputformat, string of formats for conversion.\n\
-                                Required: inputfile if -i or piped in tables\n\
-                            Note: In this mode, the input must be a tab separated pair, key (tab) value, and each pair separated by lines\n\
-                            \n\
-                            Options not under -C:\n\
-                                Required: inputfile if -i or piped in tables\n\
-                                -b specify bin file (otherwise default is used), then requires bin file name of some pregenerated hashtable\n\
-                                -p specify whether or not the output format should contain original key value\n\
-                                -o File out, output to file instead of standard output\n\
-                                -v Validate mode, not available in convert mode, validate the input symbols,\
-                                return the same IDs if the IDs match up and return empty string otherwise\n\
-                            Note: In this mode, the input must be line separated IDs to be matched/validated.\
-							";
+    -V Verbose, shows more information and a summary.\n\
+    -i File in, inputs file name instead of text content \n\
+        -> inputfile required input file name when -i is selected.\n\
+    inputstream contents from stdin to be used to convert or match/validate.\n\
+    \n\
+    -C build hashtable (convert) mode, without this part defaults to match/validate mode.\n\
+    \n\
+Options under -C only:\n\
+    Required: inputformat, outputformat, string of formats for conversion.\n\
+    Required: inputfile if -i or piped in tables\n\
+    Note: In this mode, the input must be a tab separated pair,\n\
+          key (tab) value, and each pair separated by lines\n\
+          It is also possible to pass multiple values so they can be piped in again\n\
+          if they are separated by '\\f'\
+        \n\
+Options not under -C:\n\
+    Required: inputfile if -i or piped in tables\n\
+    \n\
+    -b specify bin file (otherwise default is used),\n\
+       then requires bin file name of some pregenerated hashtable\n\
+    -p specify whether or not the output format should contain original key value\n\
+    -o File out, output to file instead of standard output\n\
+    -v Validate mode, not available in convert mode, validate the input symbols,\n\
+       return the same IDs if the IDs match up and return empty string otherwise\n\
+Note: In this mode, the input must be line OR '\\f' separated IDs to be matched/validated.\
+        ";
         if (settings.verbose)
             std::cout<<info<<std::endl<<detail<<std::endl;
         else std::cout<<info<<std::endl;
@@ -351,7 +358,10 @@ namespace fastgenematch
         std::clog<<"Output format: "<<param.outputformat<<std::endl;
         std::clog<<"Input filename: "<<settings.fname<<std::endl;
         std::clog<<"Bin bucket filename: "<<settings.binname<<std::endl;
-        std::clog<<"Automatically generated output name: "<<param.outputname<<std::endl;
+        if (settings.convert)
+            std::clog<<"Automatically generated output name: "<<param.outputname<<std::endl;
+        else
+            std::clog<<"Automatically generated output name: "<<"output.csv"<<std::endl;
         return ;
     }		/* -----  end of function print_info  ----- */
 

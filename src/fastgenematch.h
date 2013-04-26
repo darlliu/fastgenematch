@@ -215,6 +215,10 @@ namespace fastgenematch
             /* ====================  ACCESSORS     ======================================= */
             void print_help();
             void print_settings();
+            inline void print_version()
+            {
+                std::clog<<"Fast Gene Match v"<<FGCVERSION<<std::endl;
+            };
             void validate();
             void match();
             void match_pair();
