@@ -328,17 +328,16 @@ Options under -C only:\n\
           key (tab) value, and each pair separated by lines\n\
           It is also possible to pass multiple values so they can be piped in again\n\
           if they are separated by '\\f'\
-        \n\
+        \n\n\
 Options not under -C:\n\
     Required: inputfile if -i or piped in tables\n\
-    \n\
     -b specify bin file (otherwise default is used),\n\
-       then requires bin file name of some pregenerated hashtable\n\
+       then requires bin file name of some pre-generated hashtable\n\
     -p specify whether or not the output format should contain original key value\n\
     -o File out, output to file instead of standard output\n\
     -v Validate mode, not available in convert mode, validate the input symbols,\n\
        return the same IDs if the IDs match up and return empty string otherwise\n\
-Note: In this mode, the input must be line OR '\\f' separated IDs to be matched/validated.\
+    Note: In this mode, the input must be line OR '\\f' separated IDs to be matched/validated.\n\
         ";
         if (settings.verbose)
             std::cout<<info<<std::endl<<detail<<std::endl;
