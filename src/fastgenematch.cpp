@@ -141,9 +141,10 @@ namespace fastgenematch
             f.write((char*) &length, sizeof(length));
             size_t s=data->size();
             f.write((char*) &(s), sizeof(size_t));
+            size_t len1,len2;
             for (auto it: *data)
             {
-                size_t len1=it.first.size(),len2=it.second.size();
+                len1=it.first.size(),len2=it.second.size();
                 f.write((char*) &len1, sizeof(size_t));
                 f.write((char*) it.first.c_str(), len1+1);
                 f.write((char*) &len2, sizeof(size_t));
@@ -168,21 +169,17 @@ namespace fastgenematch
             data->reserve(length);
             size_t s;
             f.read((char*) &s, sizeof(size_t));
+            size_t len1,len2;
+            char first[128], second[128];
             for (size_t i=0; i<s; i++)
             {
-                size_t len1,len2;
-                char* first, *second;
                 //get two holders;
                 f.read((char*) &len1, sizeof(size_t));
-                first=new char[len1+1];
                 f.read((char*) first, len1+1);
                 f.read((char*) &len2, sizeof(size_t));
-                second=new char[len2+1];
                 f.read((char*) second, len2+1);
                 std::string key(first), value(second);
                 (*data)[key]=value;
-                delete first;
-                delete second;
             }
             f.close();
         }
