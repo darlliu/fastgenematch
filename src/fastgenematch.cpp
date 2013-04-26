@@ -178,8 +178,7 @@ namespace fastgenematch
                 f.read((char*) first, len1+1);
                 f.read((char*) &len2, sizeof(size_t));
                 f.read((char*) second, len2+1);
-                std::string key(first), value(second);
-                (*data)[key]=value;
+                (*data)[std::string(first)]=std::string(second);
             }
             f.close();
         }
