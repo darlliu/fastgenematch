@@ -497,7 +497,8 @@ Options not under -C:\n\
     Genematcher::validate (  )
     {
         std::string key, value;
-        auto iss=feedin();
+        std::stringstream iss;
+		iss<<feedin();
         std::ostringstream oss;
         while (iss.good())
         {
@@ -525,7 +526,8 @@ Options not under -C:\n\
     Genematcher::match()
     {
         std::string key, value;
-        auto iss=feedin();
+        std::stringstream iss;
+		iss<<feedin();
         std::ostringstream oss;
         while (iss.good())
         {
@@ -542,7 +544,8 @@ Options not under -C:\n\
     Genematcher::match_pair()
     {
         std::string key, value;
-        auto iss=feedin();
+        std::stringstream iss;
+		iss<<feedin();
         std::ostringstream oss;
         while (iss.good())
         {
@@ -562,10 +565,10 @@ Options not under -C:\n\
      *  Description:  connect from cin/out or file to rest of program
      * =====================================================================================
      */
-    std::ostringstream&
+    const std::string&
     Genematcher::feedin ()
     {
-        std::ostringstream iss;
+        std::stringstream iss;
         if (settings.filein)
         {
             std::ifstream fs (settings.fname);
@@ -580,7 +583,7 @@ Options not under -C:\n\
                 iss<<s<<std::endl;
             }
         }
-        return iss;
+        return iss.str();
     }		/* -----  end of function feedin  ----- */
     void
     Genematcher::feedout (const std::ostringstream& oss)
@@ -590,6 +593,7 @@ Options not under -C:\n\
             std::ofstream fs ("output.csv");
             if (!fs.good()) throw (ErrMsg("Failed to write!"));
             fs<<oss.str();
+            fs.flush();
 			fs.close();
         }
         else std::cout<<oss.str();
@@ -613,10 +617,12 @@ Options not under -C:\n\
         }else{
             if(settings.convert)
             {
-                (*this)<<feedin();
+                std::istringstream iss(feedin());
+                (*this)<<iss;
                 std::ostringstream oss;
                 (*this)>>oss;
                 feedout(oss);
+			} else {
                 if (settings.bin)
                     table.load(settings.binname);
                 else{
@@ -629,10 +635,6 @@ Options not under -C:\n\
                         table.load();
                         ff.close();
                     }
-                }
-                while (go)
-                {
-                    feedin();
                     if (settings.validate)
                     {
                         validate();
@@ -644,12 +646,7 @@ Options not under -C:\n\
                             match();
                         }
                     }
-                    feedout();
-                    go=settings.hold;
-                    settings.filein=false;
                     //hold on listening to stdin if hold set
-                    iss.clear();
-                    oss.clear();
                     //in any case we will clear the intermediate streams
                 }
             }

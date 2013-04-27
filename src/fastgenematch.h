@@ -226,8 +226,8 @@ namespace fastgenematch
 
             /* ====================  MUTATORS      ======================================= */
             bool read(int argc, char** argv);
-            std::istream& feedin();
-            void feedout(const std::ostream&);
+            const std::string& feedin();
+            void feedout(const std::ostringstream&);
             bool main(int argc, char** argv);
 
             /* ====================  DATA MEMBERS  ======================================= */
