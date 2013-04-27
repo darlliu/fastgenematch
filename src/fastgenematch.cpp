@@ -126,6 +126,8 @@ namespace fastgenematch
      * ===  FUNCTION  ======================================================================
      *         Name:  serialize, load
      *  Description:  serialize the hashtable
+     *  Note       :  consider using uint32_t instead of size_t--probably still platform
+     *                dependent
      * =====================================================================================
      */
     void
