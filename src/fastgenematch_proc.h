@@ -82,13 +82,14 @@ namespace fastgenematch
                     }
                     else
                     {
-                        if (!binset)
-                            if (settings.validate)
-                            {
-                                validate();
-                            }else{
-                                match_pair();
-                            }
+						if (!binset) throw(ErrMsg("Bin file not loaded!"));
+						if (settings.validate)
+						{
+							validate();
+						}else{
+							match();
+						}
+						reset();
                     }
                     std::cout<<"---*---"<<std::endl;
                 }
