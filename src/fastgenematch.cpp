@@ -261,7 +261,7 @@ namespace fastgenematch
         if (!in.good()) return in;
         char line[256],key[128],value[128];
         //impose line limit of 256, it really should be just around 25
-        while (!in.eof())
+        while (in.good())
         {
             in.getline(line,256);\
             if (line[0]=='\0') continue;
