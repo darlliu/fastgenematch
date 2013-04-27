@@ -171,7 +171,6 @@ namespace fastgenematch
         {
             std::stringstream f;
             f<<fs.rdbuf();
-            fs.close();
             if (f.good())
             {
                 f.read((char*) &formats.first, sizeof(int));
@@ -410,6 +409,9 @@ Options not under -C:\n\
                     case 'b':
                         settings.bin=true;
                         break;
+                    case 'H':
+                        settings.hold=true;
+                        break;
                     case 'p':
                         settings.pair=true;
                         break;
@@ -423,17 +425,15 @@ Options not under -C:\n\
                     else if (oformat=="") oformat=argvv;
                     else if (f=="") f=argvv;
                     else break;
-                }else{
+                } else {
                     if (settings.bin)
                         if (bin=="")
                             bin=argvv;
-                        else
-                        {
+                        else {
                             f=argvv;
                             break;
                         }
-                    else
-                    {
+                    else {
                         f=argvv;
                         break;
                     }
@@ -572,8 +572,7 @@ Options not under -C:\n\
             if (!fs.good()) throw (ErrMsg("Failed to read!") );
             iss<<fs.rdbuf();
             fs.close();
-        }
-        else {
+        }else{
             std::string s(".");
             while (s!="")
             {
@@ -618,7 +617,6 @@ Options not under -C:\n\
                 std::ostringstream oss;
                 (*this)>>oss;
                 feedout(oss);
-            } else {
                 if (settings.bin)
                     table.load(settings.binname);
                 else{
@@ -627,17 +625,32 @@ Options not under -C:\n\
                     {
                         ff.close();
                         return false;
-                    }else{
+                    } else {
                         table.load();
                         ff.close();
                     }
                 }
-                if (settings.validate){
-                    validate();
-                }else if (settings.pair){
-                    match_pair();
-                }else {
-                    match();
+                while (go)
+                {
+                    feedin();
+                    if (settings.validate)
+                    {
+                        validate();
+                    }else{
+                        if (settings.pair)
+                        {
+                            match_pair();
+                        }else{
+                            match();
+                        }
+                    }
+                    feedout();
+                    go=settings.hold;
+                    settings.filein=false;
+                    //hold on listening to stdin if hold set
+                    iss.clear();
+                    oss.clear();
+                    //in any case we will clear the intermediate streams
                 }
             }
         }

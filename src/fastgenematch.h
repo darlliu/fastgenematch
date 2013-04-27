@@ -202,6 +202,7 @@ namespace fastgenematch
                 Genematch_converter()
             {
                 settings.bin=false;
+                settings.hold=false;
                 settings.convert=false;
                 settings.verbose=false;
                 settings.validate=false;
@@ -232,6 +233,7 @@ namespace fastgenematch
             /* ====================  DATA MEMBERS  ======================================= */
             struct params
             {
+                bool hold;
                 bool bin;
                 bool pair;
                 bool verbose;
