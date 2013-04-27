@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 #include <memory>
+#include <vector>
 #include <stdint.h>
 #include <unordered_map>
 #include "MurmurHash3.h"

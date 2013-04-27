@@ -131,8 +131,7 @@ namespace fastgenematch
     void
     Geneobject::serialize(const std::string& name)
     {
-        std::ofstream f;
-        f.open(name,std::ofstream::binary);
+        std::ostringstream f;
         if (f.good())
         {
             f.write((char*) &formats.first, sizeof(int));
@@ -150,39 +149,52 @@ namespace fastgenematch
                 f.write((char*) &len2, sizeof(size_t));
                 f.write((char*) it.second.c_str(), len2+1);
             }
-            f.close();
+            std::ofstream fs;
+            fs.open(name,std::ios::binary);
+            fs<<f;
+            f.flush();
+            fs.flush();
+            fs.close();
+
+
+            return;
         }
-        else f.close();
+        else return;
     };
 
     void
     Geneobject::load(const std::string& name)
     {
-        std::ifstream f;
-        f.open(name,std::ifstream::binary);
-        if (f.good())
+        std::ifstream fs;
+        fs.open(name,std::ifstream::binary);
+        if (fs.good())
         {
-            f.read((char*) &formats.first, sizeof(int));
-            f.read((char*) &formats.second, sizeof(int));
-            f.read((char*) &seed, sizeof(seed));
-            f.read((char*) &length, sizeof(length));
-            data->reserve(length);
-            size_t s;
-            f.read((char*) &s, sizeof(size_t));
-            size_t len1,len2;
-            char first[128], second[128];
-            for (size_t i=0; i<s; i++)
+            std::stringstream f;
+            f<<fs.rdbuf();
+            fs.close();
+            if (f.good())
             {
-                //get two holders;
-                f.read((char*) &len1, sizeof(size_t));
-                f.read((char*) first, len1+1);
-                f.read((char*) &len2, sizeof(size_t));
-                f.read((char*) second, len2+1);
-                (*data)[std::string(first)]=std::string(second);
+                f.read((char*) &formats.first, sizeof(int));
+                f.read((char*) &formats.second, sizeof(int));
+                f.read((char*) &seed, sizeof(seed));
+                f.read((char*) &length, sizeof(length));
+                data->reserve(length);
+                size_t s;
+                f.read((char*) &s, sizeof(size_t));
+                size_t len1,len2;
+                char first[128], second[128];
+                for (size_t i=0; i<s; i++)
+                {
+                    //get two holders;
+                    f.read((char*) &len1, sizeof(size_t));
+                    f.read((char*) first, len1+1);
+                    f.read((char*) &len2, sizeof(size_t));
+                    f.read((char*) second, len2+1);
+                    (*data)[std::string(first)]=std::string(second);
+                }
             }
-            f.close();
         }
-        else f.close();
+        else fs.close();
     };
 
                         /*
@@ -485,6 +497,8 @@ Options not under -C:\n\
     Genematcher::validate (  )
     {
         std::string key, value;
+        auto iss=feedin();
+        std::ostringstream oss;
         while (iss.good())
         {
             //std::stringstream trim;
@@ -496,6 +510,7 @@ Options not under -C:\n\
             value=table[key];
             if (value=="") oss<<""<<std::endl;
             else oss<<key<<std::endl;
+            feedout(oss);
         }
         return ;
     }		/* -----  end of function validate  ----- */
@@ -510,6 +525,8 @@ Options not under -C:\n\
     Genematcher::match()
     {
         std::string key, value;
+        auto iss=feedin();
+        std::ostringstream oss;
         while (iss.good())
         {
             key.clear();
@@ -517,6 +534,7 @@ Options not under -C:\n\
             //cleanup
             value=table[key];
             if (value!="") oss<<value<<std::endl;
+            feedout(oss);
         }
         return ;
     }
@@ -524,6 +542,8 @@ Options not under -C:\n\
     Genematcher::match_pair()
     {
         std::string key, value;
+        auto iss=feedin();
+        std::ostringstream oss;
         while (iss.good())
         {
             key.clear();
@@ -531,6 +551,7 @@ Options not under -C:\n\
             //cleanup
             value=table[key];
             oss<<key<<"\t"<<value<<std::endl;
+            feedout(oss);
         }
         return ;
     }
@@ -541,9 +562,10 @@ Options not under -C:\n\
      *  Description:  connect from cin/out or file to rest of program
      * =====================================================================================
      */
-    std::istream&
+    std::ostringstream&
     Genematcher::feedin ()
     {
+        std::ostringstream iss;
         if (settings.filein)
         {
             std::ifstream fs (settings.fname);
@@ -561,8 +583,8 @@ Options not under -C:\n\
         }
         return iss;
     }		/* -----  end of function feedin  ----- */
-    std::ostream&
-    Genematcher::feedout ()
+    void
+    Genematcher::feedout (const std::ostringstream& oss)
     {
         if (settings.fileout)
         {
@@ -571,8 +593,7 @@ Options not under -C:\n\
             fs<<oss.str();
 			fs.close();
         }
-        else std::cout<<oss.rdbuf();
-        return oss;
+        else std::cout<<oss.str();
     }		/* -----  end of function feedin  ----- */
 
     /*
@@ -591,11 +612,12 @@ Options not under -C:\n\
             print_settings();
             return false;
         }else{
-            feedin();
             if(settings.convert)
             {
-                (*this)<<iss;
+                (*this)<<feedin();
+                std::ostringstream oss;
                 (*this)>>oss;
+                feedout(oss);
             } else {
                 if (settings.bin)
                     table.load(settings.binname);
@@ -618,7 +640,6 @@ Options not under -C:\n\
                     match();
                 }
             }
-            feedout();
         }
         return true;
     }		/* -----  end of function main  ----- */

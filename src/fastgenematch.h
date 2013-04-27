@@ -226,7 +226,7 @@ namespace fastgenematch
             /* ====================  MUTATORS      ======================================= */
             bool read(int argc, char** argv);
             std::istream& feedin();
-            std::ostream& feedout();
+            void feedout(const std::ostream&);
             bool main(int argc, char** argv);
 
             /* ====================  DATA MEMBERS  ======================================= */
@@ -243,7 +243,6 @@ namespace fastgenematch
                 bool fileout;
             };
             params settings;
-            std::stringstream iss,oss;
     }; /* -----  end of class Genematcher  ----- */
 
 };
