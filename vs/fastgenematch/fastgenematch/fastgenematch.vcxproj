@@ -66,12 +66,13 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\smhasher-read-only\MurmurHash3.h" />
     <ClInclude Include="..\..\..\src\fastgenematch.h" />
+    <ClInclude Include="..\..\..\src\fastgenematch_proc.h" />
     <ClInclude Include="..\..\..\src\utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\smhasher-read-only\MurmurHash3.cpp" />
     <ClCompile Include="..\..\..\src\fastgenematch.cpp" />
-    <ClCompile Include="..\..\..\src\main.cpp" />
+    <ClCompile Include="..\..\..\src\main_proc.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -3,6 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fastgenematch", "fastgenematch\fastgenematch.vcxproj", "{60E7C34C-F22D-4FCF-A437-1BC44C90AC2F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E6C23ECA-E8CE-47E8-9CDB-6E770DB25C29}"
+	ProjectSection(SolutionItems) = preProject
+		Performance2.psess = Performance2.psess
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32

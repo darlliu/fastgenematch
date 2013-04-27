@@ -484,7 +484,6 @@ Options not under -C:\n\
                 settings.fname=f;
             }
         }
-        print_settings();
         return true;
     }		/* -----  end of function read  ----- */
     /*
@@ -508,8 +507,12 @@ Options not under -C:\n\
             key.clear();
             iss>>key;
             value=table[key];
-            if (value=="") oss<<""<<std::endl;
-            else oss<<key<<std::endl;
+            if (value!="")
+            {
+                if (settings.pair) oss<<key<<"\t"<<value<<std::endl;
+                else oss<<key<<std::endl;
+            }
+            else continue;
         }
         feedout(oss);
         return ;
@@ -575,11 +578,14 @@ Options not under -C:\n\
             settings.filein=false;//only load once
         }else{
             std::string s(".");
-            while (s!="")
+            while (1)
             {
                 std::getline(std::cin,s);
+                if(s=="") break;
                 iss<<s<<std::endl;
             }
+            std::cin.sync();
+            //sanity control
         }
         return iss.str();
     }		/* -----  end of function feedin  ----- */
@@ -653,6 +659,7 @@ Options not under -C:\n\
                 //in any case we will clear the intermediate streams
             }
         }
+        if (settings.verbose) print_settings();
         return true;
     }		/* -----  end of function main  ----- */
 }

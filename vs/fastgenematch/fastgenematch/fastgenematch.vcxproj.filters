@@ -24,15 +24,18 @@
     <ClInclude Include="..\..\..\smhasher-read-only\MurmurHash3.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\fastgenematch_proc.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\smhasher-read-only\MurmurHash3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\main.cpp">
+    <ClCompile Include="..\..\..\src\fastgenematch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\fastgenematch.cpp">
+    <ClCompile Include="..\..\..\src\main_proc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

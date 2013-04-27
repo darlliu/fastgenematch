@@ -218,7 +218,7 @@ namespace fastgenematch
             void print_settings();
             inline void print_version()
             {
-                std::clog<<"Fast Gene Match v"<<FGCVERSION<<std::endl;
+                std::clog<<"Fast Gene Match v"<<(float)FGCVERSION/10<<std::endl;
             };
             void validate();
             void match();

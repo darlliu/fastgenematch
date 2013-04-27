@@ -26,7 +26,7 @@
  *(const void * key, int len, uint32_t seed, void* out)
  */
 // helper function just to hide clumsy syntax
-#define FGCVERSION 0.2
+#define FGCVERSION 2
 inline void Murmur3
     (const void * key, int len, uint32_t seed, void* out)
 {
