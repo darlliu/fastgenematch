@@ -8,3 +8,4 @@ fgc.exe
 .svn/*
 vs/*
 deployed/*
+*.pyc

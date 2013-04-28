@@ -67,13 +67,13 @@ namespace fastgenematch
                         std::getline(std::cin,line);
                         bind(line);
                         std::cin.sync();
-						std::clog<<"--BOUND--"<<std::endl;
+                        std::clog<<"--BOUND--"<<std::endl;
                     }
                     else if (line == "validate")
                     {
                         settings.validate=true;
                         std::cin.sync();
-						std::clog<<"--SETVALIDATE--"<<std::endl;
+                        std::clog<<"--SETVALIDATE--"<<std::endl;
                     }
                     else if (line == "tell")
                     {

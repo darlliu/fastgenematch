@@ -132,7 +132,8 @@ namespace fastgenematch
             size_t s;
             f.read((char*) &s, sizeof(size_t));
             size_t len1,len2;
-            char first[128], second[128];
+            char first[65536], second[65536];
+            // overflow has become an issue...
             for (size_t i=0; i<s; i++)
             {
                 //get two holders;
