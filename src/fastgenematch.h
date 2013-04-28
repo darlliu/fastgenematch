@@ -9,13 +9,12 @@ namespace fastgenematch
      */
     typedef enum
     {
+        allowed=-2,
         unknown=-1,
         geneid=0,
         entry=0,
         exit=0,
-        allowed=-2,
         swissprot=1,
-        uniprot_crick=1,
         uniprot,
         genesym,
         refseq,

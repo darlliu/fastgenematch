@@ -60,20 +60,20 @@ namespace fastgenematch
                     std::getline(std::cin,line);
                     std::cin.sync();
                     if (line=="TERMINATETERMINATE") return;
-                    std::cout<<"---*---"<<std::endl;
+                    std::clog<<"---*---"<<std::endl;
                     if (line=="bind")
                         //rebind
                     {
                         std::getline(std::cin,line);
                         bind(line);
                         std::cin.sync();
-						std::cout<<"--BOUND--"<<std::endl;
+						std::clog<<"--BOUND--"<<std::endl;
                     }
                     else if (line == "validate")
                     {
                         settings.validate=true;
                         std::cin.sync();
-						std::cout<<"--SETVALIDATE--"<<std::endl;
+						std::clog<<"--SETVALIDATE--"<<std::endl;
                     }
                     else if (line == "tell")
                     {
@@ -82,16 +82,18 @@ namespace fastgenematch
                     }
                     else
                     {
-						if (!binset) throw(ErrMsg("Bin file not loaded!"));
-						if (settings.validate)
-						{
-							validate();
-						}else{
-							match();
-						}
-						reset();
+                        std::cin.sync();
+                        //clear whatever has been typed
+                        if (!binset) throw(ErrMsg("Bin file not loaded!"));
+                        if (settings.validate)
+                        {
+                            validate();
+                        }else{
+                            match();
+                        }
+                        reset();
                     }
-                    std::cout<<"---*---"<<std::endl;
+                    std::clog<<"---*---"<<std::endl;
                 }
                 while (true);
             };

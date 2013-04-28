@@ -59,6 +59,9 @@ class fgc(object):
         self.which()
         #make sure process is alive and sane
         return
+    def __del__(self):
+        self.kill();
+
     def which(self):
         """
         returns the format code of the bin bucket
@@ -109,12 +112,14 @@ class fgc(object):
         self.proc.stdin.write(msg)
         self.proc.stdin.flush()
         return
-
     def kill(self):
         self.proc.kill()
         return
 
 class host(object):
+    """
+    simple tcp ip host for the converter
+    """
     def __init__(self):
         self.entries=[];
         self.exits=[]
@@ -142,12 +147,12 @@ class host(object):
         if ("fgc_geneid_genesym" not in toload or
         "fgc_geneid_uniprot" not in toload or
         "fgc_uniprot_geneid" not in toload or
-        "fgc_swissprot_nill" not in toload):
+        "fgc_swissprot_swissprot" not in toload):
             raise IOError
         else:
             self.exit_uniprot=fgc("fgc_geneid_uniprot")
             self.exit_genesym=fgc("fgc_geneid_genesym")
-            self.exit_swissprot=fgc("fgc_swissprot_nill")
+            self.exit_swissprot=fgc("fgc_swissprot_swissprot")
         for some in toload:
             if "entry" in some:
                 self.entries.append(some)
@@ -172,7 +177,7 @@ class host(object):
     def process_data(self):
         commands= self.data[0].split()
         goodcmd=[]
-        self.format1=None;
+        self.format1=None
         self.format2=None
         if len(commands)>1:
             doform=False
@@ -212,10 +217,10 @@ class host(object):
                         out="".join([i for i in raw if i.isalnum()]).lower()
                     commands[i]=out;
             goodcmd+=["DO"]
-            commands = goodcmd + commands[1:]
+            commands = goodcmd + commands[1:]+[""]
         else:
             goodcmd=["DO"]
-            commands=goodcmd+commands
+            commands=goodcmd+commands+[""]
         if not self.format2:
             self.format2="swissprot"
         return commands

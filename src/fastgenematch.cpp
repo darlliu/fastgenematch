@@ -21,55 +21,6 @@
 
 namespace fastgenematch
 {
-    /* Not used
-     *Geneconverter::Geneconverter()
-     *{
-     *    greeks["α"]="alpha";
-     *    greeks["β"]="alpha";
-     *    greeks["γ"]="gamma";
-     *    greeks["δ"]="delta";
-     *    greeks["ε"]="epsilon";
-     *    greeks["ζ"]="tao";
-     *    greeks["η"]="eta";
-     *    greeks["θ"]="theta";
-     *    greeks["κ"]="kappa";
-     *    greeks["λ"]="lambda";
-     *    greeks["μ"]="mu";
-     *    greeks["ν"]="nu";
-     *    greeks["ξ"]="xi";
-     *    greeks["Θ"]="theta";
-     *    greeks["π"]="pi";
-     *    greeks["τ"]="tao";
-     *    greeks["φ"]="phi";
-     *    greeks["Φ"]="phi";
-     *    greeks["χ"]="chi";
-     *    greeks["ψ"]="psi";
-     *    greeks["Ω"]="omega";
-     *    greeks["ω"]="omega";
-     *    greeks["_"]="";
-     *    greeks["-"]="";
-     *};
-     *std::string
-     *Geneconverter::format(const std::string& key)
-     *{
-     *    std::string out("");
-     *    std::string temp(key);
-     *    for (auto it:temp)
-     *    {
-     *        try
-     *        {
-     *            out+=greeks.at(it);
-     *        }
-     *        catch(...)
-     *        {
-     *            out+=it;
-     *        }
-     *    }
-     *    return out;
-     *}
-     */
-//decided this is for python wrapper
-
                             /*
                              *      Container
                              */
@@ -210,15 +161,19 @@ namespace fastgenematch
     Genematch_converter::initialize()
     {
         lookup["genesym"]=genesym;
-        lookup["emsemble_id"]=emsemble_id;
-        lookup["emsemble"]=emsemble_id;
-        lookup["unigene_id"]=unigene_id;
+        lookup["emsemble"]=emsemble;
+        lookup["emsemble_id"]=emsemble;
+        lookup["unigene_id"]=unigene;
         lookup["uniprot"]=uniprot;
         lookup["swissprot"]=swissprot;
-        lookup["uniprot_crick"]=uniprot_crick;
-        lookup["crick"]=uniprot_crick;
+        lookup["uniprot_crick"]=swissprot;
+        lookup["crick"]=swissprot;
+        lookup["entry"]=entry;
+        lookup["exit"]=exit;
+        lookup["refseq"]=refseq;
         lookup["string"]=string;
         lookup["other"]=allowed;
+        lookup["embl"]=embl;
         table.reseed();
     }
 
@@ -612,7 +567,7 @@ Options not under -C:\n\
     bool
     Genematcher::main (int argc, char** argv)
     {
-        std::clog<<"Fast gene converter v0.0"<<std::endl;
+        print_version();
         if (!read(argc, argv))
         {
             std::cerr<<"Error reading options!"<<std::endl;

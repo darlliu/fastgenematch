@@ -1,2 +1,2 @@
 #!/bin/bash
-./fgc.exe -b -H fgc_affy_uniprot.bin
+./fgc.exe -p -H -b fgc_affy_uniprot.bin
