@@ -19,28 +19,28 @@ if not os.path.exists(FGCEXE):
     raise IOError
 
 TRANSTABLE={
-    u"¦Á":"a",
-    u"¦Â":"b",
-    u"¦Ã":"g",
-    u"¦Ä":"d",
-    u"¦Å":"e",
-    u"¦Æ":"t",
-    u"¦Ç":"e",
-    u"¦È":"theta",
-    u"¦Ê":"k",
-    u"¦Ë":"l",
-    u"¦Ì":"mu",
-    u"¦Í":"nu",
-    u"¦Î":"xi",
-    u"¦¨":"theta",
-    u"¦Ð":"pi",
-    u"¦Ó":"t",
-    u"¦Õ":"phi",
-    u"¦µ":"phi",
-    u"¦Ö":"chi",
-    u"¦×":"psi",
-    u"¦¸":"o",
-    u"¦Ø":"o",
+    u"Î±":"a",
+    u"Î²":"b",
+    u"Î³":"g",
+    u"Î´":"d",
+    u"Îµ":"e",
+    u"Î¶":"t",
+    u"Î·":"e",
+    u"Î¸":"theta",
+    u"Îº":"k",
+    u"Î»":"l",
+    u"Î¼":"mu",
+    u"Î½":"nu",
+    u"Î¾":"xi",
+    u"Î˜":"theta",
+    u"Ï€":"pi",
+    u"Ï„":"t",
+    u"Ï†":"phi",
+    u"Î¦":"phi",
+    u"Ï‡":"chi",
+    u"Ïˆ":"psi",
+    u"Î©":"o",
+    u"Ï‰":"o",
     u"_":"",
     u"-":""
 }
@@ -100,18 +100,28 @@ class fgc(object):
         return self.pipe(another)
 
     def give (self, msg=None):
-        """
-        give output in list
-        """
-        msg=self.pollread()
-        return msg.split("\n")
+        return self.pollread()
+
     def get (self, msg=None):
         """
         get input as a string
         """
-        self.proc.stdin.write(msg)
+        self.proc.stdin.write("DO\n"+msg+"\n")
+        #pad the message so it goes through
+        #note that this does not affect the validate
+        #routine
         self.proc.stdin.flush()
         return
+
+    def verify (self, entries=None):
+        """
+        issue a validate command with entries
+        """
+        msg="\n".join(entries)
+        self.proc.stdin.write("VALIDATE\n"+msg+"\n")
+        out=self.pollread()
+        return out.split("\n")
+
     def kill(self):
         self.proc.kill()
         return
@@ -124,6 +134,7 @@ class host(object):
         self.entries=[];
         self.exits=[]
         self.entry_uniprot=None
+        self.entry_genesym=None
         self.exit_uniprot=None
         self.exit_genesym=None
         self.exit_swissprot=None
@@ -147,12 +158,15 @@ class host(object):
         if ("fgc_geneid_genesym" not in toload or
         "fgc_geneid_uniprot" not in toload or
         "fgc_uniprot_geneid" not in toload or
+        "fgc_genesym_geneid" not in toload or
         "fgc_swissprot_swissprot" not in toload):
             raise IOError
         else:
             self.exit_uniprot=fgc("fgc_geneid_uniprot")
             self.exit_genesym=fgc("fgc_geneid_genesym")
             self.exit_swissprot=fgc("fgc_swissprot_swissprot")
+            self.entry_genesym=fgc("fgc_genesym_geneid")
+            self.entry_uniprot=fgc("fgc_uniprot_geneid")
         for some in toload:
             if "entry" in some:
                 self.entries.append(some)
@@ -164,25 +178,111 @@ class host(object):
         """
         main routine
         """
+        self.socket.listen(1)
         self.MSG="--Sending--\n"
         con,add = self.socket.accept(1)
         if not con:
             return
         self.data=con.recv(4096).strip().split("\n")
         commands = self.process_data()
+        print commands[0], len(commands)
         #do something
+
+        #if input is set, grab input if unless it is geneid
+        #if not found or input not set, try out
+        proc=None
+        if self.format1:
+            if self.format1=="geneid":
+                proc=None
+                #no need to pipe
+                break
+            elif self.format1=="uniprot":
+                proc=self.entry_uniprot
+                break
+            elif self.format1=="genesym":
+                proc=self.entry_genesym
+                break
+            for sth in self.entries:
+                if self.format1 in sth:
+                    proc=fgc(sth)
+                    break
+            if not proc:
+                proc,_=self.tryinput(commands)
+        else:
+            proc1=self.entry_uniprot
+            #if nothing is found, use uniprot anyway
+        if self.verify:
+            if not proc:
+                commands=self.exit_genesym.verify(commands)
+                self.MSG+="\n".join(commands)
+                self.MSG+="--Done--"
+                con.send(self.MSG)
+                return;
+            else:
+                commands=proc1.verify(commands)
+                self.MSG+="\n".join(commands)
+                self.MSG+="--Done--"
+                con.send(self.MSG)
+                return;
+
+        proc2=None
+        if self.format2:
+            if self.format2=="genesym":
+                proc2=self.exit_genesym
+                break
+            if self.format2=="swissprot" or self.format2=="uniprot":
+                break;
+            for sth in self.exits:
+                if self.format2 in sth:
+                    proc2=fgc(sth)
+                    break
+        #now if output format is not set, assume swissprot
+
+        #now do the conversion finally!
+        if not proc:
+            if proc2:
+                proc2.get(commands)
+                self.MSG+=proc2.give()
+            else:
+                self.exit_uniprot.get()
+                self.MSG+=(self.exit_uniprot|self.exit_swissprot).give()
+        else:
+            proc1.get(commands)
+            if proc2:
+                self.MSG+=(proc1|proc2).give()
+            else:
+                self.MSG+=(proc1|self.exit_uniprot|self.exit_swissprot).give()
+        self.MSG+="--Done--"
         con.send(self.MSG)
         return
 
+    def tryinput(self, commands):
+        for i in self.entries:
+            with fgc(i) as proc:
+                output=proc.verify(commands)
+                if len(output)>1:
+                    return (proc, output)
+                else:
+                    continue;
+        return (None, None)
+
+    def __del__(self):
+        """
+        make sure connection is closed, this should be handled gracefully
+        """
+        self.socket.close()
+        sys.exit();
+        return
     def process_data(self):
         commands= self.data[0].split()
+        self.validate=False
         goodcmd=[]
         self.format1=None
         self.format2=None
         if len(commands)>1:
             doform=False
             if "validate" in commands:
-                goodcmd+=["VALIDATE"]
+                self.validate=True
             if "from" in commands:
                 self.format1=commands[commands.index("from")+1];
                 if self.format1=="genesym":
@@ -191,6 +291,7 @@ class host(object):
                 self.format2=commands[commands.index("to")+1]
             if "format" in commands:
                 doform=True;
+                self.format1="genesym"
             if doform:
                 #begin format routine
                 for i in xrange(1,len(commands)):
@@ -216,11 +317,9 @@ class host(object):
                     else:
                         out="".join([i for i in raw if i.isalnum()]).lower()
                     commands[i]=out;
-            goodcmd+=["DO"]
-            commands = goodcmd + commands[1:]+[""]
+            commands = goodcmd + commands[1:]
         else:
-            goodcmd=["DO"]
-            commands=goodcmd+commands+[""]
+            commands = commands
         if not self.format2:
             self.format2="swissprot"
         return commands

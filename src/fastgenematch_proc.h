@@ -80,7 +80,7 @@ namespace fastgenematch
                         report();
                         std::cin.sync();
                     }
-                    else
+                    else if (line== "DO")
                     {
                         std::cin.sync();
                         //clear whatever has been typed
@@ -93,6 +93,7 @@ namespace fastgenematch
                         }
                         reset();
                     }
+                    else ;
                     std::clog<<"---*---"<<std::endl;
                 }
                 while (true);
