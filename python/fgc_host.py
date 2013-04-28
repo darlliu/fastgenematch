@@ -1,4 +1,5 @@
 #!/auto/igb-libs/linux/centos/6.x/x86_64/pkgs/python/2.6.8/bin/python
+# -*- coding: utf-8 -*-
 # host for fgc.exe
 # listens to port PORTNUM and do the following
 # 0, maintains multiple subprocesses of fgc.exe each loaded
@@ -9,11 +10,11 @@
 # 3, formats the ID if necessary, get targeted input/output
 # 4, If formats specified and found convert as is.
 # 5, otherwwise checks the first few words and automatically convert if found
-import os, sys, socket, subprocess,time
+import os, sys, socket, subprocess, time, select
 PORTNUM=47606
 HOST=''
 FGCDIR="/home/dock/workspace/yuliu/codebase/mycodes/ids/"
-BINDIR="/home/dock/workspace/yuliu/codebase/mycodes/ids/bin"
+BINDIR="/home/dock/workspace/yuliu/codebase/mycodes/ids/bin/"
 FGCEXE=FGCDIR+"fgc_proc.exe"
 if not os.path.exists(FGCEXE):
     raise IOError
@@ -46,48 +47,59 @@ TRANSTABLE={
 }
 
 class fgc(object):
-    def __init__(self, execname="fgc.exe", binfilename=None, log=None):
+    def __init__(self, binfilename=None, log=None):
         if not binfilename:
             raise IOError
         self.format1=-1;
         self.format2=-1;
-        self.proc=subprocess.Popen(["bind", binfilename], bufsize=4096, executable=FGCEXE,
+        self.proc=subprocess.Popen([FGCEXE],
                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                   stderr=log)
+                                   stderr=log, shell=True)
         #opens a slave process with relatively large bufsize
-        self.pollread()
-        self.which()
+        self.proc.stdin.write("bind\n")
+        self.proc.stdin.write(BINDIR+binfilename+"\n")
+        #self.which()
         #make sure process is alive and sane
+        self.set_timeout()
         return
     def __del__(self):
-        self.kill();
+        self.proc.kill();
 
     def which(self):
         """
         returns the format code of the bin bucket
         """
         self.proc.stdin.write("tell")
-        msgs=self.pollread().split("\n")
+        msgs=self.pollread().split("\t")
         #read cleanly
         if msgs==None:
             raise IOError
             self.kill();
         return (int(msgs[0]), int(msgs[1]))
+    def set_timeout(self,timeout=10):
+        self.timeout=timeout
     def pollread(self):
         """
         simple polling function
+        from nest of heliopolis
         """
-        t1=time.time()
         msg=None
-        while True:
-            t2=time.time()
-            if t2-t1>15:
-                return None
-            msg=self.proc.stdout.read()
-            if len (msg.strip())>1:
-                break;
-            else:
-                time.sleep(0.05)
+        time.sleep(0.1)
+        #we wait a little while for output to be available
+        def read():
+            poll=select.poll()
+            poll.register(self.proc.stdout.fileno(), select.POLLIN or select.POLLPRI)
+            fd = poll.poll(self.timeout)
+            if len (fd):
+                f=fd[0]
+                if f[1]>0:
+                    return self.proc.stdout.read(1)
+        c=read()
+        if c != None:
+            msg=""
+            while c != None:
+                msg+=str(c)
+                c=read()
         return msg;
     def pipe (self, another):
         msg=self.pollread();
@@ -106,7 +118,7 @@ class fgc(object):
         """
         get input as a string
         """
-        self.proc.stdin.write("DO\n"+msg+"\n")
+        self.proc.stdin.write("DO\n"+msg+"\n\n")
         #pad the message so it goes through
         #note that this does not affect the validate
         #routine
@@ -118,9 +130,12 @@ class fgc(object):
         issue a validate command with entries
         """
         msg="\n".join(entries)
-        self.proc.stdin.write("VALIDATE\n"+msg+"\n")
+        self.proc.stdin.write("VALIDATE\n"+msg+"\n\n")
         out=self.pollread()
-        return out.split("\n")
+        if out:
+            return out.split("\n")
+        else:
+            return ""
 
     def kill(self):
         self.proc.kill()
@@ -195,19 +210,17 @@ class host(object):
             if self.format1=="geneid":
                 proc=None
                 #no need to pipe
-                break
-            elif self.format1=="uniprot":
-                proc=self.entry_uniprot
-                break
-            elif self.format1=="genesym":
-                proc=self.entry_genesym
-                break
-            for sth in self.entries:
-                if self.format1 in sth:
-                    proc=fgc(sth)
-                    break
-            if not proc:
-                proc,_=self.tryinput(commands)
+            else:
+                if self.format1=="uniprot":
+                    proc=self.entry_uniprot
+                elif self.format1=="genesym":
+                    proc=self.entry_genesym
+                for sth in self.entries:
+                    if self.format1 in sth:
+                        proc=fgc(sth)
+                        break
+                if not proc:
+                    proc,_=self.tryinput(commands)
         else:
             proc1=self.entry_uniprot
             #if nothing is found, use uniprot anyway
@@ -229,13 +242,13 @@ class host(object):
         if self.format2:
             if self.format2=="genesym":
                 proc2=self.exit_genesym
-                break
-            if self.format2=="swissprot" or self.format2=="uniprot":
-                break;
-            for sth in self.exits:
-                if self.format2 in sth:
-                    proc2=fgc(sth)
-                    break
+            elif self.format2=="swissprot" or self.format2=="uniprot":
+                pass;
+            else:
+                for sth in self.exits:
+                    if self.format2 in sth:
+                        proc2=fgc(sth)
+                        break
         #now if output format is not set, assume swissprot
 
         #now do the conversion finally!
@@ -329,7 +342,5 @@ class host(object):
 
 
 
-
-
-
-
+if __name__ == "__main__":
+    a=fgc("fgc_swissprot_swissprot", subprocess.PIPE)
