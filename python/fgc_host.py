@@ -10,7 +10,7 @@
 # 3, formats the ID if necessary, get targeted input/output
 # 4, If formats specified and found convert as is.
 # 5, otherwwise checks the first few words and automatically convert if found
-import os, sys, socket, subprocess, time, select
+import os, sys, socket, subprocess, time, select, async_subprocess
 PORTNUM=47606
 HOST=''
 FGCDIR="/home/dock/workspace/yuliu/codebase/mycodes/ids/"
@@ -47,6 +47,130 @@ TRANSTABLE={
 }
 
 class fgc(object):
+    def __init__(self, binfilename=None, log=None):
+        if not binfilename:
+            raise IOError
+        self.format1=-1;
+        self.format2=-1;
+        self.set_timeout()
+        self.proc=async_subprocess.AsyncPopen([FGCEXE], shell=True,
+                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        self.towrite="bind\n"
+        self.pollread(True)
+        self.towrite=BINDIR+binfilename+"\n"
+        self.pollread(True)
+        self.ping()
+        #make sure process is alive and sane
+        return
+    def __del__(self):
+        self.kill();
+
+    def ping(self):
+        """
+        returns the format code of the bin bucket
+        serves as a sanity check tool
+        """
+        t1=time.time()
+        msgs,_=self.proc.communicate("tell\n")
+        while msgs==None:
+            t2=time.time()
+            if t2-t1>self.timeout:
+                sys.exit()
+            msgs,_=self.proc.communicate(None)
+            time.sleep(1)
+            #forcibly exit when sanity is not guaranteed
+        msgs=msgs.split("\n")[0].split("\t")
+        print msgs
+        self.format1,self.format2=msgs[0],msgs[1]
+        return (int(msgs[0]), int(msgs[1]))
+    def set_timeout(self,timeout=30):
+        self.timeout=timeout
+    def pollread(self,forerr=False):
+        """
+        simple polling function
+        from nest of heliopolis
+        """
+        t1=time.time()
+        msg,_=self.proc.communicate(self.towrite)
+        if msg!=None:
+            del self.towrite
+            self.towrite=""
+            return msg
+        else:
+            msg=""
+            received=False
+            cleared=False
+            while not (received and cleared):
+                t2=time.time()
+                if t2-t1>self.timeout:
+                    return None
+                time.sleep(0.1)
+                _msg, err=self.proc.communicate(None)
+                if _msg:
+                    received=True
+                    msg+=_msg
+                if received and _msg==None:
+                    cleared=True
+                if err:
+                    print err
+                    if forerr:
+                        break
+            del self.towrite
+            self.towrite=""
+            return msg
+    def pipe (self, another):
+        msg=self.pollread();
+        if msg==None:
+            msg=""
+        another._get(msg)
+        return another
+
+    def __or__(self, another):
+        return self.pipe(another)
+
+    def give (self, msg=None):
+        msg=self.pollread()
+        if not msg:
+            return ""
+        else:
+            return msg
+    def get(self,msg=None):
+        self.towrite="\n".join(["DO"]+msg)+"\n\n"
+        return
+
+    def _get (self, msg=None):
+        self.towrite="DO\n"+msg+"\n\n"
+        #pad the message so it goes through
+        #note that this does not affect the validate
+        #routine
+        return
+
+    def verify (self, entries=None):
+        """
+        issue a validate command with entries
+        """
+        if len (entries)> 5:
+            msg="\n".join(entries[:5])
+        else:
+            msg="\n".join(entries)
+
+        self.towrite="VALIDATE\nDO\n"+msg+"\n\n"
+        print "Trying to verify", msg
+        out=self.pollread(True)
+        print "got", out
+        if out:
+            return out.split("\n")
+        else:
+            return ""
+
+    def kill(self):
+        self.proc.communicate("TERMINATETERMINATE\n")
+        self.proc.communicate("TERMINATETERMINATE\n")
+        self.proc.kill()
+        return
+
+class fgc2(object):
     def __init__(self, binfilename=None, fin=subprocess.PIPE, fout=subprocess.PIPE, log=None):
         if not binfilename:
             raise IOError
@@ -248,8 +372,8 @@ class host(object):
                     if self.format1 in sth:
                         proc=fgc(sth)
                         break
-        if flag:
-            if not proc:
+        if flag and not proc:
+            if self.guess:
                 proc,_=self.tryinput(commands)
             if not proc:
                 proc=self.entry_uniprot
@@ -329,6 +453,8 @@ class host(object):
         return
     def format (self, commands):
         doform=False
+        if "guess" in commands:
+            self.guess=True
         if "validate" in commands:
             self.validate=True
         if "from" in commands:
@@ -371,6 +497,7 @@ class host(object):
     def process_data(self):
         commands= self.data[0].split()
         self.validate=False
+        self.guess=False
         self.format1=None
         self.format2=None
         if len(commands)>1:
