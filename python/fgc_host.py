@@ -47,25 +47,22 @@ TRANSTABLE={
 }
 
 class fgc(object):
-    def __init__(self, binfilename=None, log=None):
+    def __init__(self, binfilename=None, fin=subprocess.PIPE, fout=subprocess.PIPE, log=None):
         if not binfilename:
             raise IOError
         self.format1=-1;
         self.format2=-1;
         self.set_timeout()
         self.proc=subprocess.Popen([FGCEXE], shell=True,
-                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                   stdin=fin, stdout=fout,
                                    stderr=log)
-        #opens a slave process with relatively large bufsize
         self.proc.stdin.write("bind\n")
         self.proc.stdin.write(BINDIR+binfilename+"\n")
-        self.ping()
+        #self.ping()
         #make sure process is alive and sane
         return
     def __del__(self):
-        self._get("TERMINATETERMINATE\n")
-        self._get("TERMINATETERMINATE\n")
-        self.proc.kill();
+        self.kill();
 
     def ping(self):
         """
@@ -113,7 +110,6 @@ class fgc(object):
             while c != None:
                 msg+=str(c)
                 c=read()
-        print repr(msg)
         return msg
     def pipe (self, another):
         msg=self.pollread();
@@ -149,7 +145,7 @@ class fgc(object):
         issue a validate command with entries
         """
         msg="\n".join(entries)
-        self.proc.stdin.write("VALIDATE\n"+msg+"\n\n")
+        self.proc.stdin.write("VALIDATE\nDO\n"+msg+"\n\n")
         out=self.pollread()
         if out:
             return out.split("\n")
@@ -157,6 +153,8 @@ class fgc(object):
             return ""
 
     def kill(self):
+        self._get("TERMINATETERMINATE\n")
+        self._get("TERMINATETERMINATE\n")
         self.proc.kill()
         return
 
@@ -174,9 +172,10 @@ class host(object):
         self.exit_swissprot=None
         #these three are held in memory running because they
         #are typical exit nodes, if some other conversion is needed
-        #that will be done on an ondemand basis
+        #that will be done on an on demand basis
         try:
             self.socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         except socket.error as emsg:
             print repr(emsg)
             return
@@ -190,6 +189,12 @@ class host(object):
             if ".bin" in fname:
                 toload.append(fname)
         print toload
+        for some in toload:
+            if "entry" in some:
+                print "added on demand table", some
+                self.entries.append(some)
+            elif "exit" in some:
+                self.exits.append(some)
         if ("fgc_geneid_genesym.bin" not in toload or
         "fgc_geneid_uniprot.bin" not in toload or
         "fgc_uniprot_geneid.bin" not in toload or
@@ -202,13 +207,7 @@ class host(object):
             self.exit_swissprot=fgc("fgc_swissprot_swissprot.bin")
             self.entry_genesym=fgc("fgc_genesym_geneid.bin")
             self.entry_uniprot=fgc("fgc_uniprot_geneid.bin")
-        for some in toload:
-            if "entry" in some:
-                self.entries.append(some)
-            elif "exit" in some:
-                self.exits.append(some)
         return;
-
     def do(self):
         """
         main routine
@@ -216,19 +215,29 @@ class host(object):
         self.socket.listen(1)
         self.MSG="--Sending--\n"
         con,add = self.socket.accept()
+        con.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if not con:
             return
-        self.data=con.recv(4096).strip().split("\n")
+        self.data=""
+        while True:
+            buf=con.recv(1024)
+            if not buf:
+                break
+            self.data+=buf
+        self.data=self.data.strip().split("\n")
         commands = self.process_data()
-        print commands, len(commands)
+        print len(commands)
         #do something
 
         #if input is set, grab input if unless it is geneid
         #if not found or input not set, try out
         proc=None
+        flag=True
+        print self.format1, self.format2
         if self.format1:
             if self.format1=="geneid":
                 proc=None
+                flag=False
                 #no need to pipe
             else:
                 if self.format1=="uniprot":
@@ -239,11 +248,12 @@ class host(object):
                     if self.format1 in sth:
                         proc=fgc(sth)
                         break
-                if not proc:
-                    proc,_=self.tryinput(commands)
-        else:
-            proc=self.entry_uniprot
-            #if nothing is found, use uniprot anyway
+        if flag:
+            if not proc:
+                proc,_=self.tryinput(commands)
+            if not proc:
+                proc=self.entry_uniprot
+                #if nothing is found, use uniprot anyway
         if self.validate:
             if not proc:
                 out=self.exit_swissprot.verify(commands)
@@ -286,19 +296,22 @@ class host(object):
             else:
                 self.MSG+=(proc|self.exit_uniprot|self.exit_swissprot).give()
         self.MSG+="--Done--"
-        con.send(self.MSG)
+        con.sendall(self.MSG)
         print proc, proc2
+        con.shutdown(socket.SHUT_RDWR)
         con.close()
         return
 
     def tryinput(self, commands):
         for i in self.entries:
-            with fgc(i) as proc:
-                output=proc.verify(commands)
-                if len(output)>1:
-                    return (proc, output)
-                else:
-                    continue;
+            proc=fgc(i)
+            output=proc.verify(commands)
+            print "verified", proc, i
+            print output
+            if len(output)>1:
+                return (proc, output)
+            else:
+                continue;
         return (None, None)
 
     def __del__(self):
@@ -310,52 +323,58 @@ class host(object):
         self.exit_genesym.kill()
         self.exit_uniprot.kill()
         self.exit_uniprot.kill()
+        #self.socket.shutdown()
+        self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         return
+    def format (self, commands):
+        doform=False
+        if "validate" in commands:
+            self.validate=True
+        if "from" in commands:
+            self.format1=commands[commands.index("from")+1];
+            if self.format1=="genesym":
+                doform=True
+        if "to" in commands:
+            self.format2=commands[commands.index("to")+1]
+        if "format" in commands:
+            doform=True;
+            self.format1="genesym"
+        if doform:
+            #begin format routine
+            for j in xrange(1,len(self.data)):
+                raw=self.data[j]
+                out=""
+                u=None
+                try:
+                    u=raw.decode("utf-8")
+                except:
+                    try:
+                        u=raw.decode("utf-16")
+                    except:
+                        u=None
+                if u:
+                    for char in u:
+                        if char in TRANSTABLE.keys():
+                            o=TRANSTABLE[char]
+                        else:
+                            o=char.encode("ascii","ignore")
+                        out+=o;
+                    out="".join([i for i in out if i.isalnum()]).lower()
+                    #these are stripped clean to alphanumericals
+                else:
+                    out="".join([i for i in raw if i.isalnum()]).lower()
+                self.data[j]=out;
+            self.data[0]=","
+        else:
+            pass;
     def process_data(self):
         commands= self.data[0].split()
         self.validate=False
         self.format1=None
         self.format2=None
         if len(commands)>1:
-            doform=False
-            if "validate" in commands:
-                self.validate=True
-            if "from" in commands:
-                self.format1=commands[commands.index("from")+1];
-                if self.format1=="genesym":
-                    doform=True
-            if "to" in commands:
-                self.format2=commands[commands.index("to")+1]
-            if "format" in commands:
-                doform=True;
-                self.format1="genesym"
-            if doform:
-                #begin format routine
-                for j in xrange(1,len(self.data)):
-                    raw=self.data[j]
-                    out=""
-                    u=None
-                    try:
-                        u=raw.decode("utf-8")
-                    except:
-                        try:
-                            u=raw.decode("utf-16")
-                        except:
-                            u=None
-                    if u:
-                        for char in u:
-                            if char in TRANSTABLE.keys():
-                                o=TRANSTABLE[char]
-                            else:
-                                o=char.encode("ascii","ignore")
-                            out+=o;
-                        out="".join([i for i in out if i.isalnum()])
-                        #these are stripped clean to alphanumericals
-                    else:
-                        out="".join([i for i in raw if i.isalnum()]).lower()
-                    self.data[j]=out;
-                self.data[0]=","
+            self.format(commands)
         else:
             pass
         if not self.format2:
