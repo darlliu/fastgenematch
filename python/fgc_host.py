@@ -100,22 +100,22 @@ class fgc(object):
         else:
             msg=""
             received=False
-            cleared=False
-            while not (received and cleared):
+            while True:
                 t2=time.time()
                 if t2-t1>self.timeout:
                     return None
                 time.sleep(0.1)
                 _msg, err=self.proc.communicate(None)
                 if _msg:
-                    received=True
                     msg+=_msg
-                if received and _msg==None:
-                    cleared=True
+                else:
+                    #break when the end is received from stderr
+                    #and reading from stdout is done
+                    if received:
+                        break
                 if err:
                     print err
-                    if forerr:
-                        break
+                    received=True
             del self.towrite
             self.towrite=""
             return msg

@@ -59,6 +59,7 @@ namespace fastgenematch
                     line.clear();
                     std::getline(std::cin,line);
                     std::cin.sync();
+                    if (std::cin.eof()) return;
                     if (line=="TERMINATETERMINATE") return;
                     std::clog<<"---*---"<<std::endl;
                     if (line=="bind")
