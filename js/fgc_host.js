@@ -84,12 +84,11 @@ function fgc (binname) {
     this.from = nametmp[1];
     this.to = nametmp[nametmp.length-1];
     //start the process
-    proc= subprocess.execFile(EXEPATH,[],{maxBuffer: 5000*1024});
+    proc= subprocess.execFile(EXEPATH,[],{maxBuffer: Number.MAX_VALUE});
     this.pid=proc.pid;
     proc.on('error', function(err){
         throw error('Error spawning', proc.pid);
     })
-    var LEN=0;
     __init_proc = function () {
         proc.stdin.write('bind\n');
         proc.stdin.write(BINPATH+binname+'\n');
@@ -139,8 +138,7 @@ function fgc (binname) {
 
     this._in = function (msg,callback){
         //console.log('IOing at',binname)
-        LEN += msg.length;
-        console.log('msg is', 'DO\n'+msg+'\n\n')
+        //console.log('msg is', 'DO\n'+msg+'\n\n')
         if (proc.stdin.write('DO\n'+msg+'\n\n')){
             proc.stdout.once('data', callback)
         } else {
@@ -231,7 +229,7 @@ server = net.createServer(function(c){
     //set a global timeout of 30s
     c.once('received',function(){
         var source='uniprot'
-        var target='mouse'
+        var target='human'
         //default params
         var buffer = bf.Buffer.concat(BUF);
         var lines=buffer.toString()
@@ -253,50 +251,52 @@ server = net.createServer(function(c){
         }
         var total=lines.length;
         c.emit('ready', total, source, target , lines);
-        c.emit('next');
+        c.emit('next',lines[0]);
     })
+    var callback = function (data){
+        c.emit('got', data);
+        return
+    }
     c.once ('ready', function (total, source, target, lines){
         var accum=0;
         console.log('Initializing one map')
-        c.on ('next', function (){
-                var line=lines[accum];
-                //pass a callback closure
-                var callback = function (_data){
-                    data = _data;
-                    delete _data;
-                    c.write(line+','+data+'\n');
-                    //the mapping in the middle is blocking
-                    console.log('callback'+ accum)
-                    accum++;
-                    if (accum==total) {
-                        console.log('Finished', accum, 'lines')
-                        c.emit('end');
-                    } else {
-                        c.emit('next');
-                    }
-                    return
+        c.on('got', function (data){
+            console.log('got something at ' +accum, data)
+            console.log('callback'+ lines[accum])
+            c.write(lines[accum]+','+data+ '\n')
+            accum++;
+            c.emit('next',lines[accum])
+            if (accum==total) {
+                console.log('Finished', accum, 'lines')
+                c.emit('end');
+                return
+            }
+        });
+        c.on ('next', function (line){
+            //pass a callback closure
+            var flag=true;
+            if (flag) for (var i=0; i< EXITS.length; i++) {
+                ext=EXITS[i];
+                console.log('Exit', ext.from, ext.to)
+                //if we are already at some exit node
+                if (ext.from==source && ext.to==target){
+                    ext.map(target, callback, line )
+                    flag=false;
+                    break;
                 }
-                var flag=true;
-                if (flag) for (var i=0; i< EXITS.length; i++) {
-                    ext=EXITS[i];
-                    //if we are already at some exit node
-                    if (ext.from==source && ext.to==target){
-                            ext.map(target, callback, line )
-                        flag=false;
-                        break;
-                    }
+            }
+            if (flag) for (var i=0; i< ENTRIES.length; i++) {
+                ent=ENTRIES[i];
+                console.log('entry', ent.from, ent.to)
+                if (ent.from == source){
+                    ent.map(target, callback, line )
+                    flag= false;
+                    break;
                 }
-                if (flag) for (var i=0; i< ENTRIES.length; i++) {
-                    ent=ENTRIES[i];
-                    if (ent.from == source){
-                            ent.map(target, callback, line )
-                        flag= false;
-                        break;
-                    }
-                }
-                if (flag) {
-                    callback('N/A')
-                }
+            }
+            if (flag) {
+                callback('N/A')
+            }
         })
     })
 
