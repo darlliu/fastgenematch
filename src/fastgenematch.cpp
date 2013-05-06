@@ -470,6 +470,7 @@ Options not under -C:\n\
             }
             else continue;
         }
+        oss<<std::endl;
         feedout(oss);
         return ;
     }		/* -----  end of function validate  ----- */
@@ -494,6 +495,7 @@ Options not under -C:\n\
             value=table[key];
             if (value!="") oss<<value<<std::endl;
         }
+        oss<<std::endl;
         feedout(oss);
         return ;
     }
@@ -511,6 +513,7 @@ Options not under -C:\n\
             value=table[key];
             oss<<key<<"\t"<<value<<std::endl;
         }
+        oss<<std::endl;
         feedout(oss);
         return ;
     }
