@@ -8,8 +8,6 @@ net = require ( 'net' )
 http = require ('http')
 os = require ( 'os' )
 fs = require ( 'fs' )
-bf = require ('buffer')
-stream = require( 'stream' )
 //imports
 PORTNUM=47606
 HOST=''
@@ -56,20 +54,6 @@ CALLBACK = function (data){
     console.log('GLOBAL DUMMY CALLBACK', ''+data);
     return
 };
-fs.exists(EXEPATH, function (exists){
-    if (!exists){
-        process.exit(-1);
-        throw Error("Coluld not find executable!");
-    }
-})
-fs.readdir(BINPATH,function (err, files){
-    for (var idx=0; idx<files.length; idx++){
-        if (/.bin/.test(files[idx])){
-            new fgc(files[idx]);
-        }
-    }
-})
-
 
 //globals
 function fgc (binname) {
@@ -78,13 +62,12 @@ function fgc (binname) {
         console.error('Error loading', binname)
         return null;
     }
-    var self=this;//???
     var nametmp = binname.split('.')[0].split('_');
     var bound=false;
     this.from = nametmp[1];
     this.to = nametmp[nametmp.length-1];
     //start the process
-    proc= subprocess.execFile(EXEPATH,[],{maxBuffer: Number.MAX_VALUE});
+    var proc= subprocess.execFile(EXEPATH);
     this.pid=proc.pid;
     proc.on('error', function(err){
         throw error('Error spawning', proc.pid);
@@ -98,12 +81,11 @@ function fgc (binname) {
                 console.log('Sucessfully bound', binname);
                 bound = true;
                 proc.stderr.removeListener('data', callback);
-                proc.stdout.setEncoding('utf8')
             }
         }
         proc.stderr.on('data', callback)
-    }; //construct once
-    __init_proc();
+        console.log('Waiting...')
+    }() ; //construct once
 
     if (/entry/.test(binname)){
         this.order = 'entry';
@@ -119,106 +101,78 @@ function fgc (binname) {
                 + this.to + ' type ' + this.order);
 
     this.format = function (key){
-        key=key.toLowerCase();
         for (var x in TRANSTABLE){
             if ((new RegExp(x)).test(key)){
-                key = key.replace(x,TRANSTABLE[x]);
+                return key.replace(x,TRANSTABLE[x]);
             }
         }
         return key;
     };
 
-    proc.stdout.on('error',function(){
-        throw Error("STDOUT ERROR AT " + binname)
-    });
-
-    proc.stdin.on('error',function(){
-        throw Error("STDIN ERROR AT " + binname)
-    });
-
-    this._in = function (msg,callback){
-        //console.log('IOing at',binname)
-        //console.log('msg is', 'DO\n'+msg+'\n\n')
-        if (proc.stdin.write('DO\n'+msg+'\n\n')){
-            proc.stdout.once('data', callback)
-        } else {
-            console.log('write failed')
-            proc.stdin.on('drain', function(){
-                proc.stdin.write('DO\n'+msg+'\n\n')
-                proc.stdout.once('data', callback)
-            })}
-        return null;
-    };
-
-    this._v = function (msg, callback){
-        //console.log('validating at',binname)
-        proc.stdin.write('VALIDATE\nDO\n'+msg+'\n\n');
+    this._in = function (msg,cb){
+        proc.stdin.write('DO\n'+msg+'\n\n');
+        var callback = function (data){
+            //now we expect the stderr to output something
+            return cb(data);
+        };
         proc.stdout.once('data', callback);
         return null;
     };
 
-    this.map = function (target, callback, msg) {
-        console.log('mapping at',binname)
-        //console.log('msg is', msg)
-        //console.log('target is', target)
-        //console.log('callback is', callback)
+    this._v = function (msg, cb){
+        proc.stdin.write('VALIDATE\nDO\n'+msg+'\n\n');
+        var callback = function (data){
+            //now we expect the stderr to output something
+            return cb(data);
+        };
+        proc.stdout.once('data', callback);
+        return null;
+    };
+
+    this.map = function (msg, target, callback) {
         //note: this assumes that the source ID of this object matches the msg
         target = typeof target !== 'undefined' ? target : 'human';
         callback = typeof callback !== 'undefined' ? callback : CALLBACK;
-        msg = typeof msg !== 'undefined' ? msg : "N/A";
-        if (self.from=="genesym") msg=self.format(msg);
-        msg=msg.trim().split('\f').join('\n')
-        if (target == self.to){
-            return self._in(msg, callback);
+        if (this.from=="genesym") msg=this.format(msg);
+        if (target == this.to){
+            return this._in(msg, callback);
             //global call back return
         } else if (target == this.from){
-            return self._v(msg, callback);
+            return this._v(msg, callback);
             //global call back return
         } else {
-            for (var i=0; i<EXITS.length; i++) {
-                out=EXITS[i];
-                //console.log('this is ', self.to, 'next is ', out.from)
-                if (out.from != self.to) continue;
-                if (out.to == target){
-                    return self._in(msg,out.map.bind(out,target, callback));
-                    break;
-                }
+            for (var out in EXITS) {
+                if (out.from != this.to) continue;
+                if (out.to == target)
+                    return self._in(msg,out.map.bind(null, target, callback));
             }   //first check if we map to a target
-            if (self.order == 'entry') for (var i=0; i< MIDDLES.length; i++) {
-                mid=MIDDLES[i];
-                //console.log('this is ', self.to, 'next is ', mid.from)
-                if (mid.from==self.to)
-                    {
-                        console.log('calling a midpoint')
-                        return self._in(msg,mid.map.bind(mid,target, callback));
-                        break;
-                    }
+            if (this.order == 'entry') for (var mid in MIDDLES) {
+                if (mid.from==this.to)
+                    return self._in(msg,mid.map.bind(null, target, callback));
                     // it is now mid's job to do the above
             }
             //if all fails...
-            console.log("Could not map", callback);
-            return callback('N/A');
+            console.log("Could not map", msg);
+            return callback(null);
         }
     };
 }
-console.log('begin service at '+ process.pid)
+console.log('begin service')
 server = net.createServer(function(c){
     console.log('Connection established at ', c.address())
-    //c.setEncoding('utf-8')
+    c.setEncoding('utf-8')
     //get strings
-    var BUF=[];
+    BUF='';
     len=-1;
     c.on('data',function(data){
-        BUF.push(data);
+
+        BUF+=data;
     })
     //get the data
-    aTimer= setInterval(function(){
+    setInterval(function(){
         if (len==BUF.length)
             //if no more buffer gets read
-            {
-                clearInterval(aTimer);
-                c.emit('received')
-            }
+            c.emit('received')
         else len=BUF.length;
     }, 100);
     //make sure all is got, intermittance is allowed to be 100ms
@@ -231,11 +185,7 @@ server = net.createServer(function(c){
         var source='uniprot'
         var target='human'
         //default params
-        var buffer = bf.Buffer.concat(BUF);
-        var lines=buffer.toString()
-        lines=lines.split('\n');
-        lines.splice(-1,1);//remove FIN pacakge
-        console.log('First line is this', lines[0])
+        var lines=BUF.split('\n')
         //chop up by lines
         if (/from/.test(lines[0]) || /to/.test(lines[0])){
             var commands=lines[0].split(' ')
@@ -249,66 +199,38 @@ server = net.createServer(function(c){
             }
             lines.splice(0,1);
         }
-        var total=lines.length;
-        c.emit('ready', total, source, target , lines);
-        c.emit('next',lines[0]);
-    })
-    var callback = function (data){
-        c.emit('got', data);
-        return
-    }
-    c.once ('ready', function (total, source, target, lines){
-        var accum=0;
-        console.log('Initializing one map')
-        c.on('got', function (data){
-            console.log('got something at ' +accum, data)
-            console.log('callback'+ lines[accum])
-            c.write(lines[accum]+','+data+ '\n')
-            accum++;
-            c.emit('next',lines[accum])
-            if (accum==total) {
-                console.log('Finished', accum, 'lines')
-                c.emit('end');
-                return
+        total=lines.length;
+        accum=0;
+        for (var line in lines){
+            var callback = function (data){
+                c.write(line+','+data);
+                accum++;
+                if (accum==total) c.emit('end');
             }
-        });
-        c.on ('next', function (line){
-            //pass a callback closure
-            var flag=true;
-            if (flag) for (var i=0; i< EXITS.length; i++) {
-                ext=EXITS[i];
-                console.log('Exit', ext.from, ext.to)
-                //if we are already at some exit node
-                if (ext.from==source && ext.to==target){
-                    ext.map(target, callback, line )
-                    flag=false;
-                    break;
-                }
+            flag=true;
+            for (var ext in EXITS){
+                //do something
+                if (ext.from==source && ext.to==target)
+                    ext.map(line, target, callback )
+                flag=false;
             }
-            if (flag) for (var i=0; i< ENTRIES.length; i++) {
-                ent=ENTRIES[i];
-                console.log('entry', ent.from, ent.to)
-                if (ent.from == source){
-                    ent.map(target, callback, line )
-                    flag= false;
-                    break;
-                }
+            if (flag) for (var ent in ENTRIES ){
+                if (ent.from == source)
+                    ent.map(line, target, callback )
+                flag= false;
             }
-            if (flag) {
-                callback('N/A')
+            if (flag){
+                c.write(line+','+'N/A')
+                accum++;
+                if (accum==total) c.emit('end');
             }
-        })
-    })
-
-    c.once('error',function(){
-        console.log('Error occurred at the connection')
-        c.emit('end')
+        }
     })
     c.once('end', function (){
         console.log('Client disconnected')
         c.end()
     })
-    //end the connection immediately when got signal
+    //end the connection
 })
 server.listen(PORTNUM,function(){
     console.log('server running')
