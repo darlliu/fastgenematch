@@ -10,6 +10,7 @@ os = require ( 'os' )
 fs = require ( 'fs' )
 bf = require ('buffer')
 stream = require( 'stream' )
+async = require ('async')
 //imports
 PORTNUM=47606
 HOST=''
@@ -84,12 +85,12 @@ function fgc (binname) {
     this.from = nametmp[1];
     this.to = nametmp[nametmp.length-1];
     //start the process
-    proc= subprocess.execFile(EXEPATH,[],{maxBuffer: Number.MAX_VALUE});
+    var proc= subprocess.execFile(EXEPATH,[],{maxBuffer: 50000*1024});
     this.pid=proc.pid;
     proc.on('error', function(err){
         throw error('Error spawning', proc.pid);
     })
-    __init_proc = function () {
+    var __init_proc = function () {
         proc.stdin.write('bind\n');
         proc.stdin.write(BINPATH+binname+'\n');
         var callback = function (data){
@@ -127,7 +128,6 @@ function fgc (binname) {
         }
         return key;
     };
-
     proc.stdout.on('error',function(){
         throw Error("STDOUT ERROR AT " + binname)
     });
@@ -135,30 +135,36 @@ function fgc (binname) {
     proc.stdin.on('error',function(){
         throw Error("STDIN ERROR AT " + binname)
     });
-
     this._in = function (msg,callback){
-        //console.log('IOing at',binname)
+        //block the next attemp
         //console.log('msg is', 'DO\n'+msg+'\n\n')
+        //console.log('Calling child at ', binname)
         if (proc.stdin.write('DO\n'+msg+'\n\n')){
-            proc.stdout.once('data', callback)
         } else {
             console.log('write failed')
             proc.stdin.on('drain', function(){
-                proc.stdin.write('DO\n'+msg+'\n\n')
-                proc.stdout.once('data', callback)
-            })}
+                processoc.stdin.write('DO\n'+msg+'\n\n')
+            })
+        }
+        proc.stdout.once('data',callback)
         return null;
     };
 
     this._v = function (msg, callback){
         //console.log('validating at',binname)
-        proc.stdin.write('VALIDATE\nDO\n'+msg+'\n\n');
-        proc.stdout.once('data', callback);
+        if (proc.stdin.write('VALIDATE\nDO\n'+msg+'\n\n')){
+        } else {
+            console.log('write failed at ', self.pid)
+            proc.stdin.on('drain', function(){
+                proc.stdin.write('VALIDATE\nDO\n'+msg+'\n\n');
+            })
+        }
+        proc.stdout.once('data',callback)
         return null;
     };
 
     this.map = function (target, callback, msg) {
-        console.log('mapping at',binname)
+        //console.log('mapping at',binname)
         //console.log('msg is', msg)
         //console.log('target is', target)
         //console.log('callback is', callback)
@@ -180,7 +186,7 @@ function fgc (binname) {
                 //console.log('this is ', self.to, 'next is ', out.from)
                 if (out.from != self.to) continue;
                 if (out.to == target){
-                    return self._in(msg,out.map.bind(out,target, callback));
+                    return self._in(msg,out.map.bind(out, target, callback));
                     break;
                 }
             }   //first check if we map to a target
@@ -189,8 +195,8 @@ function fgc (binname) {
                 //console.log('this is ', self.to, 'next is ', mid.from)
                 if (mid.from==self.to)
                     {
-                        console.log('calling a midpoint')
-                        return self._in(msg,mid.map.bind(mid,target, callback));
+                        //console.log('calling a midpoint')
+                        return self._in(msg,mid.map.bind(mid, target, callback));
                         break;
                     }
                     // it is now mid's job to do the above
@@ -249,59 +255,70 @@ server = net.createServer(function(c){
             }
             lines.splice(0,1);
         }
+        console.log('source target is ', source ,target)
         var total=lines.length;
-        c.emit('ready', total, source, target , lines);
-        c.emit('next',lines[0]);
+        c.emit('ready', source, target , lines);
+        c.emit('count', total)
     })
-    var callback = function (data){
-        c.emit('got', data);
-        return
+    var callback = function (recall, line, data){
+        data=data.split('\n')[0].split('\f')[0];
+        //truncate output to one only, can be changed
+        try{
+            c.write(line+','+data+'\n');
+        }
+        catch (err){
+            return recall(Error("Write Error"));
+        }
+        //the mapping in the middle is blocking
+        return recall(null);
+        //signals that the run is finished
     }
-    c.once ('ready', function (total, source, target, lines){
-        var accum=0;
+    c.once ('ready', function (source, target, lines){
         console.log('Initializing one map')
-        c.on('got', function (data){
-            console.log('got something at ' +accum, data)
-            console.log('callback'+ lines[accum])
-            c.write(lines[accum]+','+data+ '\n')
-            accum++;
-            c.emit('next',lines[accum])
-            if (accum==total) {
-                console.log('Finished', accum, 'lines')
-                c.emit('end');
-                return
-            }
-        });
-        c.on ('next', function (line){
             //pass a callback closure
+        var iter = function (line, recall){
             var flag=true;
             if (flag) for (var i=0; i< EXITS.length; i++) {
-                ext=EXITS[i];
-                console.log('Exit', ext.from, ext.to)
+                var ext=EXITS[i];
                 //if we are already at some exit node
                 if (ext.from==source && ext.to==target){
-                    ext.map(target, callback, line )
+                    ext.map(target, callback.bind(null,recall, line), line )
                     flag=false;
-                    break;
+                }
+            }
+            if (flag) for (var i=0; i< MIDDLES.length; i++) {
+                var mid=MIDDLES[i];
+                //if we are already at some exit node
+                if (mid.from==source && mid.to==target){
+                    mid.map(target, callback.bind(null,recall, line), line )
+                    flag=false;
                 }
             }
             if (flag) for (var i=0; i< ENTRIES.length; i++) {
-                ent=ENTRIES[i];
-                console.log('entry', ent.from, ent.to)
+                var ent=ENTRIES[i];
                 if (ent.from == source){
-                    ent.map(target, callback, line )
+                    ent.map(target, callback.bind(null,recall, line), line )
                     flag= false;
-                    break;
                 }
             }
             if (flag) {
-                callback('N/A')
+                callback(recall,line, 'N/A')
+            }
+        }
+        async.eachSeries(lines,iter,function(err){
+            if (err==null){
+                console.log('\n--Transaction complete--\n')
+                c.emit('end')
+            }
+            else{
+                console.log('Error occurred at the connection')
+                c.destroy();
+                c.emit('end');
             }
         })
     })
 
-    c.once('error',function(){
-        console.log('Error occurred at the connection')
+    c.on('error',function(err){
         c.emit('end')
     })
     c.once('end', function (){
