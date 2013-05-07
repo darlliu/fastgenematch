@@ -57,6 +57,20 @@ CALLBACK = function (data){
     console.log('GLOBAL DUMMY CALLBACK', ''+data);
     return
 };
+fs.exists(EXEPATH, function (exists){
+    if (!exists){
+        process.exit(-1);
+        throw Error("Coluld not find executable!");
+    }
+})
+fs.readdir(BINPATH,function (err, files){
+    for (var idx=0; idx<files.length; idx++){
+        if (/.bin/.test(files[idx])){
+            new fgc(files[idx]);
+        }
+    }
+})
+
 
 //globals
 function fgc (binname) {
@@ -65,6 +79,7 @@ function fgc (binname) {
         console.error('Error loading', binname)
         return null;
     }
+    var self=this;//???
     var nametmp = binname.split('.')[0].split('_');
     var bound=false;
     this.from = nametmp[1];
@@ -84,11 +99,12 @@ function fgc (binname) {
                 console.log('Sucessfully bound', binname);
                 bound = true;
                 proc.stderr.removeListener('data', callback);
+                proc.stdout.setEncoding('utf8')
             }
         }
         proc.stderr.on('data', callback)
-        console.log('Waiting...')
-    }() ; //construct once
+    }; //construct once
+    __init_proc();
 
     if (/entry/.test(binname)){
         this.order = 'entry';
@@ -104,9 +120,10 @@ function fgc (binname) {
                 + this.to + ' type ' + this.order);
 
     this.format = function (key){
+        key=key.toLowerCase();
         for (var x in TRANSTABLE){
             if ((new RegExp(x)).test(key)){
-                return key.replace(x,TRANSTABLE[x]);
+                key = key.replace(x,TRANSTABLE[x]);
             }
         }
         return key;
@@ -154,12 +171,14 @@ function fgc (binname) {
         //note: this assumes that the source ID of this object matches the msg
         target = typeof target !== 'undefined' ? target : 'human';
         callback = typeof callback !== 'undefined' ? callback : CALLBACK;
-        if (this.from=="genesym") msg=this.format(msg);
-        if (target == this.to){
-            return this._in(msg, callback);
+        msg = typeof msg !== 'undefined' ? msg : "N/A";
+        if (self.from=="genesym") msg=self.format(msg);
+        msg=msg.trim().split('\f').join('\n')
+        if (target == self.to){
+            return self._in(msg, callback);
             //global call back return
         } else if (target == this.from){
-            return this._v(msg, callback);
+            return self._v(msg, callback);
             //global call back return
         } else {
             for (var i=0; i<EXITS.length; i++) {
@@ -183,27 +202,29 @@ function fgc (binname) {
                     // it is now mid's job to do the above
             }
             //if all fails...
-            console.log("Could not map", msg);
-            return callback(null);
+            console.log("Could not map", callback);
+            return callback('N/A');
         }
     };
 }
-console.log('begin service')
+console.log('begin service at '+ process.pid)
 server = net.createServer(function(c){
     console.log('Connection established at ', c.address())
-    c.setEncoding('utf-8')
+    //c.setEncoding('utf-8')
     //get strings
-    BUF='';
+    var BUF=[];
     len=-1;
     c.on('data',function(data){
-
-        BUF+=data;
+        BUF.push(data);
     })
     //get the data
-    setInterval(function(){
+    aTimer= setInterval(function(){
         if (len==BUF.length)
             //if no more buffer gets read
-            c.emit('received')
+            {
+                clearInterval(aTimer);
+                c.emit('received')
+            }
         else len=BUF.length;
     }, 100);
     //make sure all is got, intermittance is allowed to be 100ms
@@ -216,7 +237,11 @@ server = net.createServer(function(c){
         var source='uniprot'
         var target='human'
         //default params
-        var lines=BUF.split('\n')
+        var buffer = bf.Buffer.concat(BUF);
+        var lines=buffer.toString()
+        lines=lines.split('\n');
+        lines.splice(-1,1);//remove FIN pacakge
+        console.log('First line is this', lines[0])
         //chop up by lines
         if (/from/.test(lines[0]) || /to/.test(lines[0])){
             var commands=lines[0].split(' ')
@@ -231,8 +256,9 @@ server = net.createServer(function(c){
             lines.splice(0,1);
         }
         console.log('source target is ', source ,target)
-        var total=lines.length
+        var total=lines.length;
         c.emit('ready', source, target , lines);
+        c.emit('count', total)
     })
     var callback = function (recall, line, data){
         data=data.split('\n')[0].split('\f')[0];
@@ -299,7 +325,7 @@ server = net.createServer(function(c){
         console.log('Client disconnected')
         c.end()
     })
-    //end the connection
+    //end the connection immediately when got signal
 })
 server.listen(PORTNUM,function(){
     console.log('server running')

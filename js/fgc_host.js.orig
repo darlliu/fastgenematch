@@ -8,9 +8,12 @@ net = require ( 'net' )
 http = require ('http')
 os = require ( 'os' )
 fs = require ( 'fs' )
+<<<<<<< HEAD
+=======
 bf = require ('buffer')
 stream = require( 'stream' )
 async = require ('async')
+>>>>>>> node.js
 //imports
 PORTNUM=47606
 HOST=''
@@ -70,7 +73,11 @@ function fgc (binname) {
     this.from = nametmp[1];
     this.to = nametmp[nametmp.length-1];
     //start the process
+<<<<<<< HEAD
+    var proc= subprocess.execFile(EXEPATH);
+=======
     var proc= subprocess.execFile(EXEPATH,[],{maxBuffer: 50000*1024});
+>>>>>>> node.js
     this.pid=proc.pid;
     proc.on('error', function(err){
         throw error('Error spawning', proc.pid);
@@ -111,6 +118,30 @@ function fgc (binname) {
         }
         return key;
     };
+<<<<<<< HEAD
+
+    this._in = function (msg,cb){
+        proc.stdin.write('DO\n'+msg+'\n\n');
+        var callback = function (data){
+            //now we expect the stderr to output something
+            return cb(data);
+        };
+        proc.stdout.once('data', callback);
+        return null;
+    };
+
+    this._v = function (msg, cb){
+        proc.stdin.write('VALIDATE\nDO\n'+msg+'\n\n');
+        var callback = function (data){
+            //now we expect the stderr to output something
+            return cb(data);
+        };
+        proc.stdout.once('data', callback);
+        return null;
+    };
+
+    this.map = function (msg, target, callback) {
+=======
     proc.stdout.on('error',function(){
         throw Error("STDOUT ERROR AT " + binname)
     });
@@ -151,6 +182,7 @@ function fgc (binname) {
         //console.log('msg is', msg)
         //console.log('target is', target)
         //console.log('callback is', callback)
+>>>>>>> node.js
         //note: this assumes that the source ID of this object matches the msg
         target = typeof target !== 'undefined' ? target : 'human';
         callback = typeof callback !== 'undefined' ? callback : CALLBACK;
@@ -162,6 +194,16 @@ function fgc (binname) {
             return this._v(msg, callback);
             //global call back return
         } else {
+<<<<<<< HEAD
+            for (var out in EXITS) {
+                if (out.from != this.to) continue;
+                if (out.to == target)
+                    return self._in(msg,out.map.bind(null, target, callback));
+            }   //first check if we map to a target
+            if (this.order == 'entry') for (var mid in MIDDLES) {
+                if (mid.from==this.to)
+                    return self._in(msg,mid.map.bind(null, target, callback));
+=======
             for (var i=0; i<EXITS.length; i++) {
                 out=EXITS[i];
                 //console.log('this is ', self.to, 'next is ', out.from)
@@ -180,6 +222,7 @@ function fgc (binname) {
                         return self._in(msg,mid.map.bind(mid, target, callback));
                         break;
                     }
+>>>>>>> node.js
                     // it is now mid's job to do the above
             }
             //if all fails...
@@ -230,9 +273,38 @@ server = net.createServer(function(c){
             }
             lines.splice(0,1);
         }
+<<<<<<< HEAD
+        total=lines.length;
+        accum=0;
+        for (var line in lines){
+            var callback = function (data){
+                c.write(line+','+data);
+                accum++;
+                if (accum==total) c.emit('end');
+            }
+            flag=true;
+            for (var ext in EXITS){
+                //do something
+                if (ext.from==source && ext.to==target)
+                    ext.map(line, target, callback )
+                flag=false;
+            }
+            if (flag) for (var ent in ENTRIES ){
+                if (ent.from == source)
+                    ent.map(line, target, callback )
+                flag= false;
+            }
+            if (flag){
+                c.write(line+','+'N/A')
+                accum++;
+                if (accum==total) c.emit('end');
+            }
+        }
+=======
         console.log('source target is ', source ,target)
-        var total=lines.length
+        var total=lines.length;
         c.emit('ready', source, target , lines);
+        c.emit('count', total)
     })
     var callback = function (recall, line, data){
         data=data.split('\n')[0].split('\f')[0];
@@ -294,6 +366,7 @@ server = net.createServer(function(c){
 
     c.on('error',function(err){
         c.emit('end')
+>>>>>>> node.js
     })
     c.once('end', function (){
         console.log('Client disconnected')
