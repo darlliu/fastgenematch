@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Gene conversion utility</title>
+    <meta name="description" content="Simple Gene Converter">
+    <meta name="author" content="YL">
+    <link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap.css">
+    <style type="text/css">
+        body {
+            padding-top: 60px;
+        }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+
+<body>
+<div class='container'>
+<div class='bs-docs-grid'>
+    <div class='row-fluid'>
+        <div class="page-header">
+        <h1> Gene Conversion Utility </h1>
+    <span class="label label-warning"> You will receive the file of converted genes if conversion is successful</span>
+        </div>
+    </div>
+    <form action="post_action" method="post">
+    <button class= "btn-primary btn-large">
+        Submit
+    </button>
+    <fieldset>
+    <legend>Conversion Setting</legend>
+    <label>Types</label>
+    <span class="label">From</span>
+    <select name="from">
+       <option value="AFFYMETRIX_3PRIME_IVT_ID">AFFYMETRIX_3PRIME_IVT_ID</option><option value="AFFYMETRIX_EXON_GENE_ID">AFFYMETRIX_EXON_GENE_ID</option><option value="AFFYMETRIX_SNP_ID">AFFYMETRIX_SNP_ID</option><option value="AGILENT_CHIP_ID">AGILENT_CHIP_ID</option><option value="AGILENT_ID">AGILENT_ID</option><option value="AGILENT_OLIGO_ID">AGILENT_OLIGO_ID</option><option value="ENSEMBL_GENE_ID">ENSEMBL_GENE_ID</option><option value="ENSEMBL_TRANSCRIPT_ID">ENSEMBL_TRANSCRIPT_ID</option><option value="ENTREZ_GENE_ID">ENTREZ_GENE_ID</option><option value="FLYBASE_GENE_ID">FLYBASE_GENE_ID</option><option value="FLYBASE_TRANSCRIPT_ID">FLYBASE_TRANSCRIPT_ID</option><option value="GENBANK_ACCESSION">GENBANK_ACCESSION</option><option value="GENOMIC_GI_ACCESSION">GENOMIC_GI_ACCESSION</option><option value="GENPEPT_ACCESSION">GENPEPT_ACCESSION</option><option value="ILLUMINA_ID">ILLUMINA_ID</option><option value="IPI_ID">IPI_ID</option><option value="MGI_ID">MGI_ID</option><option value="OFFICIAL_GENE_SYMBOL">OFFICIAL_GENE_SYMBOL</option><option value="PFAM_ID">PFAM_ID</option><option value="PIR_ID">PIR_ID</option><option value="PROTEIN_GI_ACCESSION">PROTEIN_GI_ACCESSION</option><option value="REFSEQ_GENOMIC">REFSEQ_GENOMIC</option><option value="REFSEQ_MRNA">REFSEQ_MRNA</option><option value="REFSEQ_PROTEIN">REFSEQ_PROTEIN</option><option value="REFSEQ_RNA">REFSEQ_RNA</option><option value="RGD_ID">RGD_ID</option><option value="SGD_ID">SGD_ID</option><option value="TAIR_ID">TAIR_ID</option><option value="UCSC_GENE_ID">UCSC_GENE_ID</option><option value="UNIGENE">UNIGENE</option><option value="UNIPROT_ACCESSION">UNIPROT_ACCESSION</option><option value="UNIPROT_ID">UNIPROT_ID</option><option value="UNIREF100_ID">UNIREF100_ID</option><option value="WORMBASE_GENE_ID">WORMBASE_GENE_ID</option><option value="WORMPEP_ID">WORMPEP_ID</option><option value="ZFIN_ID">ZFIN_ID</option>
+    </select>
+    <span class="label label-info">Convert To</span>
+    <select name="to">
+       <option value="AFFYMETRIX_3PRIME_IVT_ID">AFFYMETRIX_3PRIME_IVT_ID</option><option value="AFFYMETRIX_EXON_GENE_ID">AFFYMETRIX_EXON_GENE_ID</option><option value="AFFYMETRIX_SNP_ID">AFFYMETRIX_SNP_ID</option><option value="AGILENT_CHIP_ID">AGILENT_CHIP_ID</option><option value="AGILENT_ID">AGILENT_ID</option><option value="AGILENT_OLIGO_ID">AGILENT_OLIGO_ID</option><option value="ENSEMBL_GENE_ID">ENSEMBL_GENE_ID</option><option value="ENSEMBL_TRANSCRIPT_ID">ENSEMBL_TRANSCRIPT_ID</option><option value="ENTREZ_GENE_ID">ENTREZ_GENE_ID</option><option value="FLYBASE_GENE_ID">FLYBASE_GENE_ID</option><option value="FLYBASE_TRANSCRIPT_ID">FLYBASE_TRANSCRIPT_ID</option><option value="GENBANK_ACCESSION">GENBANK_ACCESSION</option><option value="GENOMIC_GI_ACCESSION">GENOMIC_GI_ACCESSION</option><option value="GENPEPT_ACCESSION">GENPEPT_ACCESSION</option><option value="ILLUMINA_ID">ILLUMINA_ID</option><option value="IPI_ID">IPI_ID</option><option value="MGI_ID">MGI_ID</option><option value="OFFICIAL_GENE_SYMBOL">OFFICIAL_GENE_SYMBOL</option><option value="PFAM_ID">PFAM_ID</option><option value="PIR_ID">PIR_ID</option><option value="PROTEIN_GI_ACCESSION">PROTEIN_GI_ACCESSION</option><option value="REFSEQ_GENOMIC">REFSEQ_GENOMIC</option><option value="REFSEQ_MRNA">REFSEQ_MRNA</option><option value="REFSEQ_PROTEIN">REFSEQ_PROTEIN</option><option value="REFSEQ_RNA">REFSEQ_RNA</option><option value="RGD_ID">RGD_ID</option><option value="SGD_ID">SGD_ID</option><option value="TAIR_ID">TAIR_ID</option><option value="UCSC_GENE_ID">UCSC_GENE_ID</option><option value="UNIGENE">UNIGENE</option><option value="UNIPROT_ACCESSION">UNIPROT_ACCESSION</option><option value="UNIPROT_ID">UNIPROT_ID</option><option value="UNIREF100_ID">UNIREF100_ID</option><option value="WORMBASE_GENE_ID">WORMBASE_GENE_ID</option><option value="WORMPEP_ID">WORMPEP_ID</option><option value="ZFIN_ID">ZFIN_ID</option>
+    </select>
+    <span class="label label-inverse">Limit to Species</span>
+    <select name="species">
+        <option value=""> None<option>
+        <option value="_HUMAN"> Human<option>
+        <option value="_MOUSE"> Mouse<option>
+    </select>
+
+    <label>Email</label>
+    <input type="text" name="email" placeholder="Your email address…" value=''/>
+    <span class="help-block">Enter your email if you want an email receipt.</span>
+
+    <label class="checkbox">
+    <input type="hidden" name="mmatch" value="1" />
+    <input type="checkbox" name="mmatch" value="0" /> Disallow multiple matches  </label>
+
+    <legend>Symbols</legend>
+    <p>
+    Please make sure each symbol occupies one line and there is no empty line in between.
+    </p>
+    <textarea name="content" rows="6" placeholder="List of symbols"></textarea>
+    </fieldset>
+    </form>
+</div>
+
+
+<blockquote class="pull-right">
+    <h6><p class="muted">Click <a href="./which">here</a> to see the current live telnet portal</p>
+    </h6>
+</blockquote>
+
+</div>
+</body>
+</html>

@@ -11,10 +11,13 @@ fs = require ( 'fs' )
 bf = require ('buffer')
 stream = require( 'stream' )
 async = require ('async')
+express= require ('express')
 //imports
 PORTNUM=47606
+HTTPPORT=3030
 HOST=''
 EXEPATH='/home/dock/workspace/yuliu/codebase/mycodes/ids/fgc_proc.exe'
+PAGEPATH='/home/dock/workspace/yuliu/codebase/mycodes/ids/portal.html'
 FORMATEXECPATH='/home/dock/workspace/yuliu/codebase/mycodes/ids/format.py'
 BINPATH='/home/dock/workspace/yuliu/codebase/mycodes/ids/bin/'
 ENTRIES=[];
@@ -80,7 +83,7 @@ function fgc (binname) {
         return null;
     }
     var self=this;//???
-    var nametmp = binname.split('.')[0].split('_');
+    var nametmp = binname.split('.')[0].split('__');
     var bound=false;
     this.from = nametmp[1];
     this.to = nametmp[nametmp.length-1];
@@ -143,7 +146,7 @@ function fgc (binname) {
         } else {
             console.log('write failed')
             proc.stdin.on('drain', function(){
-                processoc.stdin.write('DO\n'+msg+'\n\n')
+                proc.stdin.write('DO\n'+msg+'\n\n')
             })
         }
         proc.stdout.once('data',callback)
@@ -172,7 +175,7 @@ function fgc (binname) {
         target = typeof target !== 'undefined' ? target : 'human';
         callback = typeof callback !== 'undefined' ? callback : CALLBACK;
         msg = typeof msg !== 'undefined' ? msg : "N/A";
-        if (self.from=="genesym") msg=self.format(msg);
+        if (self.from=="OFFICIAL_GENE_SYMBOL") msg=self.format(msg);
         msg=msg.trim().split('\f').join('\n')
         if (target == self.to){
             return self._in(msg, callback);
@@ -213,12 +216,12 @@ server = net.createServer(function(c){
     //c.setEncoding('utf-8')
     //get strings
     var BUF=[];
-    len=-1;
+    var len=-1;
     c.on('data',function(data){
         BUF.push(data);
     })
     //get the data
-    aTimer= setInterval(function(){
+    var aTimer = setInterval(function(){
         if (len==BUF.length)
             //if no more buffer gets read
             {
@@ -234,8 +237,8 @@ server = net.createServer(function(c){
     }, 30000)
     //set a global timeout of 30s
     c.once('received',function(){
-        var source='uniprot'
-        var target='human'
+        var source='OFFICIAL_GENE_SYMBOL'
+        var target='UNIPROT_ACCESSION'
         //default params
         var buffer = bf.Buffer.concat(BUF);
         var lines=buffer.toString()
@@ -249,10 +252,10 @@ server = net.createServer(function(c){
             var idf=commands.indexOf('from'), idt=commands.indexOf('to')
             source = idf==-1 ? source : commands[idf+1];
             target = idt==-1 ? target : commands[idt+1];
-            if (target == 'uniprot'){
-                if (/mouse/.test(lines[0])) target ='mouse';
-                else target = 'human';
-            }
+            //if (target == 'uniprot'){
+                //if (/mouse/.test(lines[0])) target ='mouse';
+                //else target = 'human';
+            //}
             lines.splice(0,1);
         }
         console.log('source target is ', source ,target)
@@ -261,10 +264,39 @@ server = net.createServer(function(c){
         c.emit('count', total)
     })
     var callback = function (recall, line, data){
-        data=data.split('\n')[0].split('\f')[0];
+        delete _data, tempdata;
+        var _data=[];
+        //c.write(line+","+data);
+        //return recall(null);
+        if (data.trim()==""){
+            c.write(line+","+"N/A\n");
+            return recall(null);
+        }
+        //if (/\n/.test(data)){
+        var tempdata=data.split('\n');
+        //console.log('split is '+data)
+        for (var i=0; i<tempdata.length; i++){
+            //console.log(data[i])
+            if (tempdata[i].trim() == "")
+                continue;
+            if (/\f/.test(tempdata[i])){
+                //console.log(data[i].split('\f'))
+                _data=_data.concat(tempdata[i].split('\f'));
+                //console.log("_data is ", _data)
+            }
+            else
+                _data.push(tempdata[i]);
+        }
+        //}         //console.log("_data is ", _data)
+
         //truncate output to one only, can be changed
         try{
-            c.write(line+','+data+'\n');
+            for (var j = 0; j<_data.length; j ++){
+                //console.log('iterating at '+ _data[j]);
+                if (_data[j].trim()== "") continue;
+                c.write(line+','+_data[j]+'\n');
+            }
+            return recall(null);
         }
         catch (err){
             return recall(Error("Write Error"));
@@ -283,6 +315,7 @@ server = net.createServer(function(c){
                 //if we are already at some exit node
                 if (ext.from==source && ext.to==target){
                     ext.map(target, callback.bind(null,recall, line), line )
+                    //console.log('going to',ext.from, ext.to)
                     flag=false;
                 }
             }
@@ -290,6 +323,7 @@ server = net.createServer(function(c){
                 var mid=MIDDLES[i];
                 //if we are already at some exit node
                 if (mid.from==source && mid.to==target){
+                    //console.log('going to',mid.from, mid.to)
                     mid.map(target, callback.bind(null,recall, line), line )
                     flag=false;
                 }
@@ -297,6 +331,7 @@ server = net.createServer(function(c){
             if (flag) for (var i=0; i< ENTRIES.length; i++) {
                 var ent=ENTRIES[i];
                 if (ent.from == source){
+                    //console.log('going to',ent.from, ent.to)
                     ent.map(target, callback.bind(null,recall, line), line )
                     flag= false;
                 }
@@ -334,3 +369,52 @@ server.on('error', function(e){
     console.log('Error running server')
     console.log('end service')
 })
+//a separate http server that does the following:
+//send out static http
+//listen for POST
+//send message to and back from TCP server
+//print info
+app = express()
+var WelcomeMSG="Hello, this page is currently empty.";
+WelcomeMSG= fs.readFileSync(PAGEPATH,'utf8');
+app.use(express.compress());
+app.use(express.bodyParser());
+//app.use(express.csrf())
+app.get('/',function(req,res){
+    console.log("HTTP client logged.")
+    res.send(WelcomeMSG);
+})
+app.get('/which',function(req,res){
+    res.send("The tcp server is on localhost:"+PORTNUM);
+})
+app.post('/post_action',function(req,res){
+    var tempcmd="from "+req.body.from + " to "+ req.body.to +req.body.species+ "\n";
+    //console.log(req.files)
+    if (req.files==undefined || req.files.fcontent["size"]==0){
+        var tsymbols = req.body.content.split("\n");
+        tsymbols=tsymbols.concat(["FIN"]);
+    } else {
+        var tsymbols=fs.readFileSync(req.files.fcontent.path,'utf8').split("\n");
+    }
+    var symbols=[];
+    for (var i = 0; i<tsymbols.length; i++){
+        symbols=symbols.concat(tsymbols[i].trim().split("\t"));
+    }
+    symbols=symbols.join("\n")
+    var content = tempcmd + symbols;
+    var client = net.connect ({port:PORTNUM},function (){
+        client.write(content);
+    });
+    var msg=""
+    client.on('data',function(data){
+        msg+=data;
+    })
+    client.on('end', function (){
+        res.set('Content-Type','text/plain');
+        if (msg=="")
+            res.send('Transaction terminated with no results, check your settings.');
+        else
+        res.send(msg);
+    })
+})
+app.listen(HTTPPORT)
