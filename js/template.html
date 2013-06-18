@@ -30,10 +30,8 @@
     <span class="label label-warning"> You will receive the file of converted genes if conversion is successful</span>
         </div>
     </div>
-    <form action="post_action" method="post">
-    <button class= "btn-primary btn-large">
-        Submit
-    </button>
+    
+    <form action="post_action" enctype="multipart/form-data" method="post">
     <fieldset>
     <legend>Conversion Setting</legend>
     <label>Types</label>
@@ -52,19 +50,20 @@
         <option value="_MOUSE"> Mouse<option>
     </select>
 
-    <label>Email</label>
-    <input type="text" name="email" placeholder="Your email address…" value=''/>
-    <span class="help-block">Enter your email if you want an email receipt.</span>
-
-    <label class="checkbox">
-    <input type="hidden" name="mmatch" value="1" />
-    <input type="checkbox" name="mmatch" value="0" /> Disallow multiple matches  </label>
+    <!--<label class="checkbox">-->
+    <!--<input type="hidden" name="mmatch" value="1" />-->
+    <!--<input type="checkbox" name="mmatch" value="0" /> Disallow multiple matches  </label>-->
 
     <legend>Symbols</legend>
     <p>
     Please make sure each symbol occupies one line and there is no empty line in between.
     </p>
     <textarea name="content" rows="6" placeholder="List of symbols"></textarea>
+    <p> Or upload a file instead</p>
+    <input type="file" name="fcontent"/>
+    <button class= "btn-primary btn-large">
+        Submit
+    </button>
     </fieldset>
     </form>
 </div>

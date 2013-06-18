@@ -88,7 +88,7 @@ function fgc (binname) {
     this.from = nametmp[1];
     this.to = nametmp[nametmp.length-1];
     //start the process
-    var proc= subprocess.execFile(EXEPATH,[],{maxBuffer: 50000*1024});
+    var proc= subprocess.execFile(EXEPATH,[],{maxBuffer: 5000000*1024});
     this.pid=proc.pid;
     proc.on('error', function(err){
         throw error('Error spawning', proc.pid);
@@ -414,7 +414,7 @@ app.post('/post_action',function(req,res){
         if (msg=="")
             res.send('Transaction terminated with no results, check your settings.');
         else
-        res.send(msg);
+            res.send(msg);
     })
 })
 app.listen(HTTPPORT)

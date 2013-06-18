@@ -13,7 +13,13 @@ convertIDList2<- function(input, fromType="OFFICIAL_GENE_SYMBOL", toType="UNIPRO
     } else {
         accum<-matrix(accum,nrow=length(output),ncol=2,byrow=TRUE,dimnames=list(c(),c("From",species)));
     }
-    return (accum);
+    cnt = 0;
+    for (i in 1:length(output)){
+        if (accum[i,2]=="N/A") cnt = cnt +1;
+    }
+    if (cnt > 0.5*length(output)){
+        return (convertIDList(input, fromType, toType));
+    } else {
+        return (accum);
+    }
 }
-
-
