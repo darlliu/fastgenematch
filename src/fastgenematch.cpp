@@ -371,6 +371,15 @@ Options not under -C:\n\
                     case 'p':
                         settings.pair=true;
                         break;
+                    case 'K':
+                        settings.give_keys=true;
+                        break;
+                    case 'L':
+                        settings.give_vals=true;
+                        break;
+                    case 'P':
+                        settings.give_pairs=true;
+                        break;
                     default:
                         break;
                 }
@@ -598,10 +607,36 @@ Options not under -C:\n\
                 }
                 do
                 {
-                    if (settings.validate)
+                    if (settings.give_pairs)
+                    {
+                        std::ostringstream oss;
+                        (*this)>>oss;
+                        feedout(oss);
+                    }
+                    else if (settings.give_keys)
+                    {
+                        std::ostringstream oss;
+                        for (auto it: *(table.data))
+                        {
+                            oss<<it.first<<std::endl;
+                        }
+                        feedout(oss);
+                    }
+                    else if (settings.give_vals)
+                    {
+                        std::ostringstream oss;
+                        for (auto it: *(table.data))
+                        {
+                            oss<<it.second<<std::endl;
+                        }
+                        feedout(oss);
+                    }
+                    else if (settings.validate)
                     {
                         validate();
-                    }else{
+                    }
+                    else
+                    {
                         if (settings.pair)
                         {
                             match_pair();

@@ -322,7 +322,7 @@ server = net.createServer(function(c){
             if (flag) for (var i=0; i< MIDDLES.length; i++) {
                 var mid=MIDDLES[i];
                 //if we are already at some exit node
-                if (mid.from==source && mid.to==target){
+                if (mid.from==source){
                     //console.log('going to',mid.from, mid.to)
                     mid.map(target, callback.bind(null,recall, line), line )
                     flag=false;

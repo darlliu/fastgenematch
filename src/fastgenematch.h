@@ -215,6 +215,9 @@ namespace fastgenematch
                 settings.filein=false;
                 settings.fileout=false;
                 settings.pair=false;
+                settings.give_keys=false;
+                settings.give_vals=false;
+                settings.give_pairs=false;
             };
 
             /* ====================  ACCESSORS     ======================================= */
@@ -243,6 +246,9 @@ namespace fastgenematch
                 bool verbose;
                 bool validate;
                 bool filein;
+                bool give_keys;
+                bool give_vals;
+                bool give_pairs;
                 std::string fname;
                 std::string binname;
                 bool convert;
