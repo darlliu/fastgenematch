@@ -25,18 +25,17 @@ doconvertIDList2<- function(input, fromType="OFFICIAL_GENE_SYMBOL", toType="UNIP
             }
         }
         if (s[2]=="N/A") {
-            accum <- c(accum, s[1],s[2],"N/A")
             cnt = cnt +1;
-        } else {
+        }
+        if (length(s)<=2){
+            accum <- c(accum, s[1],s[2],"N/A")
+        }
+        else {
             accum <- c(accum,s)
         }
     }
     accum<-unlist(accum);
-    if (toType=="UNIPROT_ACCESSION"){
-        accum<-matrix(accum,nrow=length(output),ncol=3,byrow=TRUE,dimnames=list(c(),c("From","To","Species")));
-    } else {
-        accum<-matrix(accum,nrow=length(output),ncol=2,byrow=TRUE,dimnames=list(c(),c("From","T")));
-    }
+    accum<-matrix(accum,nrow=length(output),ncol=3,byrow=TRUE,dimnames=list(c(),c("From","To","Species")));
     if (cnt > 0.5*length(output)){
         return (convertIDList(input, fromType, toType));
     } else {
