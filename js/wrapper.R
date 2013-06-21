@@ -12,23 +12,30 @@ doconvertIDList2<- function(input, fromType="OFFICIAL_GENE_SYMBOL", toType="UNIP
     writeLines(c, con);
     output<-readLines(con);
     close(con);
-    accum<-unlist(strsplit(output,","))
+    accum=c()
+    cnt = 0;
+    for (i in 1:length(output)){
+        s<-unlist(strsplit(output[i], ","));
+        if (length(s)>=3 && toType=="UNIPROT_ACCESSION"){
+            if (s[3]=="10090") {
+                s[3]="MOUSE";
+            }
+            if (s[3]=="9606") {
+                s[3]="HUMAN";
+            }
+        }
+        if (s[2]=="N/A") {
+            accum <- c(accum, s[1],s[2],"N/A")
+            cnt = cnt +1;
+        } else {
+            accum <- c(accum,s)
+        }
+    }
+    accum<-unlist(accum);
     if (toType=="UNIPROT_ACCESSION"){
         accum<-matrix(accum,nrow=length(output),ncol=3,byrow=TRUE,dimnames=list(c(),c("From","To","Species")));
     } else {
         accum<-matrix(accum,nrow=length(output),ncol=2,byrow=TRUE,dimnames=list(c(),c("From","T")));
-    }
-    cnt = 0;
-    for (i in 1:length(output)){
-        if (accum[i,2]=="N/A") cnt = cnt +1;
-        if (toType=="UNIPROT_ACCESSION"){
-            if (accum[i,3]=="10090") {
-                accum[i,3]="MOUSE";
-            }
-            if (accum[i,3]=="9606") {
-                accum[i,3]="HUMAN";
-            }
-        }
     }
     if (cnt > 0.5*length(output)){
         return (convertIDList(input, fromType, toType));
