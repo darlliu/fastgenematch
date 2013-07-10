@@ -1,7 +1,7 @@
 #!/auto/igb-libs/linux/centos/6.x/x86_64/pkgs/python/2.6.8/bin/python
 import os, sys, socket
 PORTNUM=47606
-HOST=''
+HOST='nebula-3.ics.uci.edu'
 def convertIDs ( fromType="OFFICIAL_GENE_SYMBOL", toType="UNIPROT_ACCESSION", species="",
         asType="pairs", ids=None):
     if ids is None:
@@ -22,7 +22,7 @@ def convertIDs ( fromType="OFFICIAL_GENE_SYMBOL", toType="UNIPROT_ACCESSION", sp
     try:
         sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.connect(('localhost',PORTNUM))
+        sock.connect((HOST,PORTNUM))
         sock.sendall(msg)
         buf=""
         while True:
