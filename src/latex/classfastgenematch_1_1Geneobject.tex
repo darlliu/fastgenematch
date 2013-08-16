@@ -1,0 +1,107 @@
+\hypertarget{classfastgenematch_1_1Geneobject}{
+\section{fastgenematch::Geneobject Class Reference}
+\label{classfastgenematch_1_1Geneobject}\index{fastgenematch::Geneobject@{fastgenematch::Geneobject}}
+}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_ad1dce72c4d21326253829528c921c97b}{
+typedef std::shared\_\-ptr$<$ std::unordered\_\-map$<$ std::string, std::string, \hyperlink{classfastgenematch_1_1Hashcaller}{Hashcaller} $>$ $>$ {\bfseries hashtable}}
+\label{classfastgenematch_1_1Geneobject_ad1dce72c4d21326253829528c921c97b}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_ab900fe6b1116e8d5b4f2f62e7d45d1f7}{
+typedef std::unordered\_\-map$<$ std::string, std::string, \hyperlink{classfastgenematch_1_1Hashcaller}{Hashcaller} $>$ {\bfseries \_\-hashtable}}
+\label{classfastgenematch_1_1Geneobject_ab900fe6b1116e8d5b4f2f62e7d45d1f7}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a69326e96a8d2cdfedee2c44f3ca2eb0b}{
+std::string \& {\bfseries operator\mbox{[}$\,$\mbox{]}} (const std::string \&key)}
+\label{classfastgenematch_1_1Geneobject_a69326e96a8d2cdfedee2c44f3ca2eb0b}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a5d0fad4b7c244be239901c6e794cf1f5}{
+std::string \& {\bfseries operator()} (const std::string \&key)}
+\label{classfastgenematch_1_1Geneobject_a5d0fad4b7c244be239901c6e794cf1f5}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a2542e61f0e78690217e94e89c386ec24}{
+uint32\_\-t {\bfseries getseed} ()}
+\label{classfastgenematch_1_1Geneobject_a2542e61f0e78690217e94e89c386ec24}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a775dded873cb868027048baee7fce0a9}{
+void {\bfseries rehash} ()}
+\label{classfastgenematch_1_1Geneobject_a775dded873cb868027048baee7fce0a9}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a36e67a37874e46d4655d8e688d975852}{
+void {\bfseries reseed} ()}
+\label{classfastgenematch_1_1Geneobject_a36e67a37874e46d4655d8e688d975852}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_ad1359c68213e594b5aa600bff1e10f64}{
+void {\bfseries setseed} (const uint32\_\-t \&in)}
+\label{classfastgenematch_1_1Geneobject_ad1359c68213e594b5aa600bff1e10f64}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a4dd2f125e2915ee2c59b09f20e329721}{
+void {\bfseries serialize} ()}
+\label{classfastgenematch_1_1Geneobject_a4dd2f125e2915ee2c59b09f20e329721}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a23178da06dc9ff52d58a7d3ba7e87a76}{
+void {\bfseries serialize} (const std::string \&)}
+\label{classfastgenematch_1_1Geneobject_a23178da06dc9ff52d58a7d3ba7e87a76}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a4532439959e22fb1618dd240a382d313}{
+void {\bfseries load} (const std::string \&)}
+\label{classfastgenematch_1_1Geneobject_a4532439959e22fb1618dd240a382d313}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a4bab27f711113a8f86066c1b40491d18}{
+void {\bfseries load} ()}
+\label{classfastgenematch_1_1Geneobject_a4bab27f711113a8f86066c1b40491d18}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_ac1da8f2a744493726da5a2fbaef4f709}{
+std::pair$<$ int, int $>$ {\bfseries formats}}
+\label{classfastgenematch_1_1Geneobject_ac1da8f2a744493726da5a2fbaef4f709}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a3e6684c3c20db786ccec541e136afa8c}{
+hashtable {\bfseries data}}
+\label{classfastgenematch_1_1Geneobject_a3e6684c3c20db786ccec541e136afa8c}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a45670e89f2e7c70136b8d69027e9972c}{
+size\_\-t {\bfseries length}}
+\label{classfastgenematch_1_1Geneobject_a45670e89f2e7c70136b8d69027e9972c}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_a60d4a4d6321022fd74d57b390e645e75}{
+std::string {\bfseries empty}}
+\label{classfastgenematch_1_1Geneobject_a60d4a4d6321022fd74d57b390e645e75}
+
+\item 
+\hypertarget{classfastgenematch_1_1Geneobject_afdb66b5183b05f3c15f6b73f691e8b57}{
+uint32\_\-t {\bfseries seed}}
+\label{classfastgenematch_1_1Geneobject_afdb66b5183b05f3c15f6b73f691e8b57}
+
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following files:\begin{DoxyCompactItemize}
+\item 
+fastgenematch.h\item 
+fastgenematch.cpp\end{DoxyCompactItemize}
