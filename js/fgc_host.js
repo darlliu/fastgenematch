@@ -15,8 +15,10 @@ express= require ('express')
 //imports
 PORTNUM=47606
 HTTPPORT=3030
+TIMEOUT_TIME=500000
 HOST=''
 EXEPATH='/home/dock/workspace/yuliu/codebase/mycodes/ids/fgc_proc.exe'
+TMPPATH='/tmp/fgc'
 PAGEPATH='/home/dock/workspace/yuliu/codebase/mycodes/ids/portal.html'
 FORMATEXECPATH='/home/dock/workspace/yuliu/codebase/mycodes/ids/format.py'
 BINPATH='/home/dock/workspace/yuliu/codebase/mycodes/ids/bin/'
@@ -66,6 +68,12 @@ fs.exists(EXEPATH, function (exists){
         throw Error("Coluld not find executable!");
     }
 })
+fs.exists(TMPPATH, function (exists){
+    if (!exists){
+        console.log("temp dir not created, creating");
+        fs.mkdir(TMPPATH);
+    }
+})
 fs.readdir(BINPATH,function (err, files){
     for (var idx=0; idx<files.length; idx++){
         if (/.bin/.test(files[idx])){
@@ -73,8 +81,6 @@ fs.readdir(BINPATH,function (err, files){
         }
     }
 })
-
-
 //globals
 function fgc (binname) {
     // main class handling the service
@@ -87,6 +93,7 @@ function fgc (binname) {
     var bound=false;
     this.from = nametmp[1];
     this.to = nametmp[nametmp.length-1];
+    this.toclear = true;
     //start the process
     var proc= subprocess.execFile(EXEPATH,[],{maxBuffer: 5000000*1024});
     this.pid=proc.pid;
@@ -108,6 +115,19 @@ function fgc (binname) {
         proc.stderr.on('data', callback)
     }; //construct once
     __init_proc();
+
+    var timeoutID = setInterval(function (proc){
+        if (this.toclear)
+            {
+                proc.stdin.write('unbind\n');
+                //console.log("Freed: "+binname);
+            }
+        else
+            {
+                this.toclear=true;
+                //console.log("Busy: "+binname);
+            }
+    },TIMEOUT_TIME, proc);
 
     if (/entry/.test(binname)){
         this.order = 'entry';
@@ -139,6 +159,7 @@ function fgc (binname) {
         throw Error("STDIN ERROR AT " + binname)
     });
     this._in = function (msg,callback){
+        this.toclear=false;
         //block the next attemp
         //console.log('msg is', 'DO\n'+msg+'\n\n')
         //console.log('Calling child at ', binname)
@@ -154,6 +175,7 @@ function fgc (binname) {
     };
 
     this._v = function (msg, callback){
+        this.toclear=false;
         //console.log('validating at',binname)
         if (proc.stdin.write('VALIDATE\nDO\n'+msg+'\n\n')){
         } else {

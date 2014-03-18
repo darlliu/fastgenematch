@@ -18,7 +18,8 @@ namespace fastgenematch
             /* ====================  LIFECYCLE     ======================================= */
             Fgc_proc ():
                 Genematcher(),
-                binset(false)
+                binset(false),
+                bound(false)
             {
                 reset();
             };                             /* constructor */
@@ -44,16 +45,22 @@ namespace fastgenematch
             };
             void bind (const std::string& name)
             {
+                bound = true;
                 settings.binname=name;
                 std::ifstream f(name, std::ios::binary);
                 if (!f.good()) throw (ErrMsg("Bad bin file!\n"));
-                table.load(settings.binname);
-                binset=true;
+                f.close();
             };
+            void unbind ()
+            {
+                binset=false;
+                table.clear();
+            }
 
             void main ()
             {
                 std::string line("");
+                std::string name("default.tmp");
                 do
                 {
                     line.clear();
@@ -70,6 +77,12 @@ namespace fastgenematch
                         std::cin.sync();
                         std::clog<<"--BOUND--"<<std::endl;
                     }
+                    else if (line == "unbind")
+                    {
+                        unbind();
+                        std::cin.sync();
+                        std::clog<<"--UNBOUND--"<<std::endl;
+                    }
                     else if (line == "validate")
                     {
                         settings.validate=true;
@@ -85,7 +98,14 @@ namespace fastgenematch
                     {
                         std::cin.sync();
                         //clear whatever has been typed
-                        if (!binset) throw(ErrMsg("Bin file not loaded!"));
+                        if (!binset)
+                        {
+                            if (!bound)
+                                throw(ErrMsg("Binary file path not set, cannot load!\n"));
+                            table.load(settings.binname);
+                            binset=true;
+                            std::clog<<"--LOADED--"<<std::endl;
+                        }
                         if (settings.validate)
                         {
                             validate();
@@ -103,6 +123,8 @@ namespace fastgenematch
         private:
             /* ====================  DATA MEMBERS  ======================================= */
             bool binset;
+            bool bound;
+            std::string tmppath="/tmp/fcg/";
 
     }; /* -----  end of class Fgc_proc  ----- */
 

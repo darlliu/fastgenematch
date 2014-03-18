@@ -1,5 +1,5 @@
 doconvertIDList2<- function(input, fromType="OFFICIAL_GENE_SYMBOL", toType="UNIPROT_ACCESSION",
-    host="nebula-3.ics.uci.edu", port=47606){
+    host="nebula-1.ics.uci.edu", port=47606){
     #Note: Species is either HUMAN, MOUSE or as default.
     if (toType=="UNIPROT_ACCESSION"){
         msg<-paste0("from ",fromType, " to ",toType,"_SPECIES");

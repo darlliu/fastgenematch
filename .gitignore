@@ -5,6 +5,13 @@ fgc.exe
 *.csv
 *.bin
 *.phc
+*.kch
+html/*
+pdf/*
+js/*
+txt/*
+*.txt
+latex/*
 .svn/*
 vs/*
 deployed/*

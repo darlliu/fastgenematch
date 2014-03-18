@@ -95,11 +95,10 @@ namespace fastgenematch
     class Geneobject
     {
         public:
-            typedef
-            std::shared_ptr<std::unordered_map<std::string,std::string,\
-                Hashcaller>> hashtable;
             typedef std::unordered_map<std::string,std::string,\
                 Hashcaller> _hashtable;
+            typedef
+            std::shared_ptr< _hashtable > hashtable;
             /* ====================  LIFECYCLE     ======================================= */
             Geneobject ():
                 empty(""), data(new _hashtable), length(2000)
@@ -142,6 +141,11 @@ namespace fastgenematch
             void serialize(const std::string&);
             void load(const std::string&);
             void load() {load ("fgcdefault.bin");};
+            void todb(const std::string&);
+            void clear(){
+                data.reset(new _hashtable);
+                data->reserve(length);
+            };
 
 			std::pair<int,int> formats;
             hashtable data;
@@ -206,12 +210,14 @@ namespace fastgenematch
                 Genematch_converter()
             {
                 settings.bin=false;
+                settings.db=false;
                 settings.hold=false;
                 settings.convert=false;
                 settings.verbose=false;
                 settings.validate=false;
                 settings.fname="";
                 settings.binname="";
+                settings.dbname="";
                 settings.filein=false;
                 settings.fileout=false;
                 settings.pair=false;
@@ -242,6 +248,7 @@ namespace fastgenematch
             {
                 bool hold;
                 bool bin;
+                bool db;
                 bool pair;
                 bool verbose;
                 bool validate;
@@ -251,6 +258,7 @@ namespace fastgenematch
                 bool give_pairs;
                 std::string fname;
                 std::string binname;
+                std::string dbname;
                 bool convert;
                 bool fileout;
             };

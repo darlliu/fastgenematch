@@ -1,0 +1,1 @@
+cmd_Release/obj.target/addon.node := flock ./Release/linker.lock clang++ -shared -pthread -rdynamic -m64  -Wl,-soname=addon.node -o Release/obj.target/addon.node -Wl,--start-group Release/obj.target/addon/addon.o Release/obj.target/addon/kchash.o -Wl,--end-group -lkyotocabinet -L/home/yul13/bin/lib

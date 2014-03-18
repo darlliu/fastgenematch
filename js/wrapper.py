@@ -1,7 +1,7 @@
 #!/auto/igb-libs/linux/centos/6.x/x86_64/pkgs/python/2.6.8/bin/python
 import os, sys, socket
 PORTNUM=47606
-HOST='nebula-3.ics.uci.edu'
+HOST='nebula-2.ics.uci.edu'
 def convertIDs ( fromType="OFFICIAL_GENE_SYMBOL", toType="UNIPROT_ACCESSION", species="",
         asType="pairs", ids=None):
     if ids is None:

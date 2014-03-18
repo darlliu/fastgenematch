@@ -15,8 +15,8 @@
  * =====================================================================================
  */
 #include"fastgenematch.h"
-
-
+#include <kchashdb.h>
+using namespace kyotocabinet;
 
 
 namespace fastgenematch
@@ -107,6 +107,21 @@ namespace fastgenematch
             return;
         }
         else return;
+    };
+
+    void Geneobject::todb(const std::string& dbpath)
+    {
+        HashDB db;
+        if (!db.open(dbpath))
+        {
+            std::cerr << "Error opening db"<<dbpath<<std::endl;
+        }
+        for (auto it: *data)
+        {
+            db.set(it.first, it.second);
+        }
+        db.tune_buckets(db.size()*2);
+        return;
     };
 
     void
@@ -338,7 +353,7 @@ Options not under -C:\n\
     Genematcher::read ( int argc, char** argv )
     {
         char* argvv;
-        std::string f="", iformat="",oformat="",bin="";
+        std::string f="", iformat="",oformat="",bin="",db="";
         for (int i=1; i<argc; i++)
         {
             argvv=argv[i];
@@ -355,6 +370,9 @@ Options not under -C:\n\
                         break;
                     case 'C':
                         settings.convert=true;
+                        break;
+                    case 'D':
+                        settings.db=true;
                         break;
                     case 'i':
                         settings.filein=true;
@@ -394,6 +412,11 @@ Options not under -C:\n\
                     if (settings.bin)
                         if (bin=="")
                             bin=argvv;
+                        else if (db=="")
+                        {
+                            db=argvv;
+                            break;
+                        }
                         else {
                             f=argvv;
                             break;
@@ -424,6 +447,11 @@ Options not under -C:\n\
                     fs.close();
                 }
             }
+        }
+        if (settings.db)
+        {
+            settings.dbname=db;
+            return true;
         }
         if (settings.convert)
         {
@@ -500,8 +528,14 @@ Options not under -C:\n\
             key.clear();
             iss>>key;
             //cleanup
+            if (key=="" || key == "\n" || key=="NA")
+            {
+                oss << "NA" <<std::endl;
+                continue;
+            }
             value=table[key];
-            if (value!="") oss<<value<<std::endl;
+            if (value=="") oss << "NA" <<std::endl;
+            else oss<<value<<std::endl;
         }
         feedout(oss);
         return ;
@@ -584,6 +618,18 @@ Options not under -C:\n\
             print_settings();
             return false;
         }else{
+            if (settings.db){
+                if (!settings.bin)
+                {
+                    std::cerr<< "For DB convertion, establish a bin file first"<<std::endl;
+                    return false;
+                }else{
+                    table.load(settings.binname);
+                }
+                table.todb(settings.dbname);
+
+                return true;
+            }
             if(settings.convert)
             {
                 std::istringstream iss(feedin());
